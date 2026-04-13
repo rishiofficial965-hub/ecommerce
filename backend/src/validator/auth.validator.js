@@ -23,6 +23,16 @@ export const validationRegisterUser = [
     .withMessage("full name is required")
     .isLength({ min: 3 })
     .withMessage("full name must be at least 3 character long"),
+  body("isSeller").isBoolean().withMessage("seller must be boolean value"),
 
-    validationRequest
+  validationRequest,
+];
+
+export const validationLoginUser = [
+  body("email").isEmail().withMessage("Invalid email format"),
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password must br at least 6 character long"),
+
+  validationRequest,
 ];

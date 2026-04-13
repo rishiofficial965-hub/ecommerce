@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+@theme {
+  --color-copper-green: #3F4E3C;
+  --color-albescent-white: #E6E3D8;
+  --color-playing-hooky: #8C937C;
+  --color-desert-khaki: #D9D0C1;
+  --color-lacquered-licorice: #383838;
+}
+
+:root {
+  --c-copper-green: #3F4E3C;
+  --c-albescent-white: #E6E3D8;
+  --c-playing-hooky: #8C937C;
+  --c-desert-khaki: #D9D0C1;
+  --c-lacquered-licorice: #383838;
+}
+
+body {
+  background-color: var(--c-desert-khaki);
+  color: var(--c-lacquered-licorice);
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes soft-rotate {
+  from {
+    transform: rotate(45deg);
+  }
+  to {
+    transform: rotate(405deg);
+  }
+}
+
+.animate-soft-rotate {
+  animation: soft-rotate 8s linear infinite;
+}
