@@ -46,7 +46,7 @@ const LoginForm = () => {
       <Nav />
 
       <div
-        className="relative z-10 flex flex-col items-center gap-8 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
+        className="relative z-10 flex flex-col items-center gap-4 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
 shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
       >
         <div className="flex flex-col items-center gap-2">

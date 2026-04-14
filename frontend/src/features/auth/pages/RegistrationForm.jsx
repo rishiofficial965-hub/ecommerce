@@ -14,7 +14,6 @@ const RegistrationForm = () => {
   const [contactNumber, setContactNumber] = useState("");
   const { handleRegister, loading } = useAuth();
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -37,7 +36,6 @@ const RegistrationForm = () => {
     setUsername("");
     setPassword("");
     setContactNumber("");
-
   };
 
   const inputClass =
@@ -50,7 +48,7 @@ const RegistrationForm = () => {
       <Nav />
 
       <div
-        className="relative z-10 flex flex-col items-center gap-8 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
+        className="relative z-10 flex flex-col items-center gap-4 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-5 
 shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
       >
         <div className="flex flex-col items-center gap-2">
@@ -129,17 +127,20 @@ shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
 
           <div>
             <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-copper-green text-albescent-white font-semibold py-3.5 hover:bg-lacquered-licorice transition-all active:scale-[0.98] cursor-pointer mt-3 shadow-[0_4px_12px_rgba(63,78,60,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating account..." : "Sign up"}
-          </button>
-          <div className="text-center my-3 text-sm text-gray-500">
-            ---------- or ----------
-          </div>
-            <a className="flex items-center justify-center rounded-full bg-white px-3 py-3 cursor-pointer hover:bg-copper-green/20 transition-all active:scale-[0.98] shadow-[0_4px_12px_rgba(63,78,60,0.2)]" href="/api/auth/google">
-              <i className="fa-brands fa-google text-lg"></i> 
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-copper-green text-albescent-white font-semibold py-3.5 hover:bg-lacquered-licorice transition-all active:scale-[0.98] cursor-pointer mt-3 shadow-[0_4px_12px_rgba(63,78,60,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? "Creating account..." : "Sign up"}
+            </button>
+            <div className="text-center my-3 text-sm text-gray-500">
+              ---------- or ----------
+            </div>
+            <a
+              className="flex items-center justify-center rounded-full bg-white px-3 py-3 cursor-pointer hover:bg-copper-green/20 transition-all active:scale-[0.98] shadow-[0_4px_12px_rgba(63,78,60,0.2)]"
+              href="/api/auth/google"
+            >
+              <i className="fa-brands fa-google text-lg"></i>
             </a>
           </div>
         </form>

@@ -9,4 +9,5 @@ export const Config = {
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
   BREVO_API_KEY: process.env.BREVO_API_KEY,
   BREVO_SENDER_EMAIL: process.env.BREVO_SENDER_EMAIL,
+  IMAGEKIT_PRIVATE_KEY: process.env.IMAGEKIT_PRIVATE_KEY,
 };
