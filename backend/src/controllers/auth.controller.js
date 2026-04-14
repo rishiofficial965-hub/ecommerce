@@ -1,6 +1,9 @@
 import userModel from "../model/user.model.js";
 import jwt from "jsonwebtoken";
 import { Config } from "../config/env.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { generateOTP } from "../utils/generateOTP.js";
+import { otpTemplate } from "../utils/emailTemplate.js";
 
 const createToken = (id) => {
   return jwt.sign({ id }, Config.JWT_SECRET, { expiresIn: "7d" });
@@ -8,7 +11,13 @@ const createToken = (id) => {
 
 async function sendTokenResponse(user, res, message) {
   const token = createToken(user._id);
-  res.cookie("token", token);
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    role: user.role,
+  });
 
   return res.status(200).json({
     message,
@@ -19,6 +28,7 @@ async function sendTokenResponse(user, res, message) {
       contact: user.contact,
       fullname: user.fullname,
       role: user.role,
+      isVerified: user.isVerified,
     },
   });
 }
@@ -34,8 +44,13 @@ export const registerHandler = async (req, res) => {
     if (existingUser) {
       return res
         .status(400)
-        .json({ message: "User with this email or contact already exists" });
+        .json({
+          success: false,
+          message: "User with this email or contact already exists",
+        });
     }
+
+    const otp = generateOTP();
 
     const user = await userModel.create({
       email,
@@ -43,11 +58,40 @@ export const registerHandler = async (req, res) => {
       password,
       fullname,
       role: isSeller ? "seller" : "buyer",
+      otp: {
+        code: otp,
+        expiresAt: Date.now() + 5 * 60 * 1000,
+      },
     });
 
-    await sendTokenResponse(user, res, "User registered successfully");
+    const htmlContent = otpTemplate(otp, fullname);
+
+    try {
+      await sendEmail(
+        email,
+        "Verify Your Email — Snitch",
+        `Your OTP is ${otp}`,
+        htmlContent,
+      );
+    } catch (emailError) {
+      console.error("Registration email failed:", emailError.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message:
+        "Account created. Please verify your email with the OTP sent to " +
+        email,
+      userId: user._id,
+    });
   } catch (err) {
-    console.log(err);
+    console.error("Register error:", err);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Registration failed. Please try again.",
+      });
   }
 };
 
@@ -58,24 +102,31 @@ export const loginHandler = async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found" });
     }
 
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid password" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid password" });
     }
 
     await sendTokenResponse(user, res, "User logged in successfully");
   } catch (err) {
-    console.log(err);
+    console.error("Login error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Login failed. Please try again." });
   }
 };
 
 export const googleCallbackHandler = async (req, res) => {
   try {
-    const { id, displayName, emails, photos } = req.user;
+    const { id, displayName, emails } = req.user;
     const email = emails[0].value;
     let isUserExist = await userModel.findOne({ email });
 
@@ -84,16 +135,142 @@ export const googleCallbackHandler = async (req, res) => {
         email: email,
         fullname: displayName,
         googleId: id,
+        isVerified: true,
       });
     }
-
-    // Set cookie and redirect WITHOUT sending JSON
     const token = createToken(isUserExist._id);
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     return res.redirect("http://localhost:5173");
   } catch (err) {
-    console.log(err);
+    console.error("Google OAuth error:", err);
     return res.redirect("http://localhost:5173/login?error=oauth_failed");
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  const { userId, otp } = req.body;
+
+  if (!userId || !otp) {
+    return res
+      .status(400)
+      .json({ success: false, message: "userId and OTP are required" });
+  }
+
+  try {
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User is already verified" });
+    }
+
+    if (!user.otp || !user.otp.code) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "No OTP found. Please request a new one.",
+        });
+    }
+
+    if (user.otp.expiresAt < Date.now()) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "OTP has expired. Please request a new one.",
+        });
+    }
+
+    if (user.otp.code !== otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid OTP. Please try again." });
+    }
+
+    user.isVerified = true;
+    user.otp.code = undefined;
+    user.otp.expiresAt = undefined;
+    await user.save();
+
+    await sendTokenResponse(
+      user,
+      res,
+      "Email verified successfully! Welcome to Snitch.",
+    );
+  } catch (err) {
+    console.error("VerifyOTP error:", err);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Verification failed. Please try again.",
+      });
+  }
+};
+
+export const sendOTP = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "userId is required" });
+  }
+
+  try {
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User is already verified" });
+    }
+
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    };
+    await user.save();
+
+    const htmlContent = otpTemplate(otp, user.fullname);
+    await sendEmail(
+      user.email,
+      "Verify Your Email — Snitch",
+      `Your OTP is ${otp}`,
+      htmlContent,
+    );
+
+    return res
+      .status(200)
+      .json({ success: true, message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("SendOTP error:", err);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to send OTP. Please try again.",
+      });
   }
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Nav from "../components/Nav";
+import Loader from "../components/Loader";
 import { useAuth } from "../hook/useAuth.js";
 
 const RegistrationForm = () => {
@@ -11,8 +12,8 @@ const RegistrationForm = () => {
   const [error, setError] = useState("");
   const [isSeller, setIsSeller] = useState(false);
   const [contactNumber, setContactNumber] = useState("");
-  const navigate = useNavigate();
   const { handleRegister, loading } = useAuth();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,15 +32,18 @@ const RegistrationForm = () => {
       return;
     }
 
-    navigate("/");
+    // Navigation to /verify-otp is handled inside useAuth.handleRegister
     setEmail("");
     setUsername("");
     setPassword("");
     setContactNumber("");
+
   };
 
   const inputClass =
     "w-full bg-copper-green/10 text-lacquered-licorice font-normal placeholder-lacquered-licorice/30 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-playing-hooky border border-copper-green/20 transition-all";
+
+  if (loading) return <Loader />;
 
   return (
     <main className="relative flex justify-center items-center min-h-screen bg-desert-khaki overflow-hidden pt-32 pb-10">

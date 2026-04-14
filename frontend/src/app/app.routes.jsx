@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import LoginForm from "../features/auth/pages/LoginForm.jsx";
 import RegistrationForm from "../features/auth/pages/RegistrationForm.jsx";
-
+import VerifyOTPPage from "../features/auth/pages/VerifyOTPPage.jsx";
 
 export const routes = createBrowserRouter([
   {
@@ -14,6 +14,10 @@ export const routes = createBrowserRouter([
   },
   {
     path: "/register",
-    element:<RegistrationForm/>,
+    element: <RegistrationForm />,
+  },
+  {
+    path: "/verify-otp",
+    element: <VerifyOTPPage />,
   },
 ]);

@@ -5,21 +5,34 @@ const authApiInstance = axios.create({
   withCredentials: true,
 });
 
-export async function register({ email, contact, password, fullname ,isSeller }) {
+export async function register({ email, contact, password, fullname, isSeller }) {
   const response = await authApiInstance.post("/register", {
     email,
     contact,
     password,
     fullname,
-    isSeller
+    isSeller,
   });
   return response.data;
 }
 
-export async function login({email,password}) {
+export async function login({ email, password }) {
   const response = await authApiInstance.post("/login", {
     email,
-    password
+    password,
   });
+  return response.data;
+}
+
+export async function verifyOTP({ userId, otp }) {
+  const response = await authApiInstance.post("/verify-otp", {
+    userId,
+    otp,
+  });
+  return response.data;
+}
+
+export async function resendOTP({ userId }) {
+  const response = await authApiInstance.post("/send-otp", { userId });
   return response.data;
 }

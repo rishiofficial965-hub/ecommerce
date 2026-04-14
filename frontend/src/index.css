@@ -22,13 +22,20 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+@keyframes drop-bounce {
+  0% { transform: translateY(-100px); opacity: 0; }
+  60% { transform: translateY(0); opacity: 1; }
+  80% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-drop-bounce {
+  animation: drop-bounce 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 @keyframes soft-rotate {
-  from {
-    transform: rotate(45deg);
-  }
-  to {
-    transform: rotate(405deg);
-  }
+  from { transform: rotate(45deg); }
+  to { transform: rotate(405deg); }
 }
 
 .animate-soft-rotate {

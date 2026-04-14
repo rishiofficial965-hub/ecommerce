@@ -17,6 +17,17 @@ const userSchema = new mongoose.Schema({
     default: "buyer",
   },
   googleId: { type: String },
+  isVerified: {
+    type: Boolean,
+    default: false,
+    required: function () {
+      return !this.googleId;
+    },
+  },
+  otp: {
+    code: { type: String },
+    expiresAt: { type: Date },
+  },
 });
 
 userSchema.pre("save", async function () {
@@ -26,7 +37,7 @@ userSchema.pre("save", async function () {
   this.password = hash;
 });
 
-userSchema.method.comparePassword = async function (password) {
+userSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
