@@ -11,12 +11,12 @@ const LoginForm = () => {
   const [eyetoggle, setEyetoggle] = useState(true);
   const [useEmailLogin, setUseEmailLogin] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
-  const { handleLogin, loading } = useAuth();
+  const navigate = useNavigate(); 
+  const { handleLogin, handleForgetPassword, loading } = useAuth();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    setError(""); 
 
     const credentials = useEmailLogin
       ? { email, password }
@@ -35,6 +35,24 @@ const LoginForm = () => {
     setUsername("");
     setPassword("");
   }
+
+  const handleForgotPasswordRequested = async () => {
+    if (!useEmailLogin) {
+      setUseEmailLogin(true);
+      setError("Please enter your email address to reset your password.");
+      return;
+    }
+
+    if (!email) {
+      setError("Please enter your email address first.");
+      return;
+    }
+
+    const result = await handleForgetPassword({ email });
+    if (!result.success) {
+      setError(result.error);
+    }
+  };
 
   const inputClass =
     "w-full bg-copper-green/10 text-lacquered-licorice font-normal placeholder-lacquered-licorice/30 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-playing-hooky border border-copper-green/20 transition-all";
@@ -116,12 +134,13 @@ shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
             >
               Sign in with {useEmailLogin ? "Username" : "Email"}
             </button>
-            <Link
-              to="/forgot-password"
-              className="text-lacquered-licorice/50 hover:text-lacquered-licorice transition-colors"
+            <button
+              type="button"
+              onClick={handleForgotPasswordRequested}
+              className="text-lacquered-licorice/50 hover:text-lacquered-licorice transition-colors cursor-pointer"
             >
               Forgot password?
-            </Link>
+            </button>
           </div>
 
           <div>

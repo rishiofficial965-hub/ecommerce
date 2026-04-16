@@ -6,12 +6,12 @@ const authSlice = createSlice({
     user: null,
     loading: false,
     error: null,
-    pendingUserId: null, // Temporarily stores userId after register, before OTP is verified
+    pendingUserId: null, 
   },
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload;
-      state.pendingUserId = null; // Clear once user is verified & logged in
+      state.pendingUserId = null; 
     },
     setLoading: (state, action) => {
       state.loading = action.payload;

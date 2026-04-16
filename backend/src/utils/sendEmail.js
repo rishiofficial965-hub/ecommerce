@@ -11,13 +11,12 @@ export const sendEmail = async (to, subject, text, html) => {
       htmlContent: html || `<p>${text}</p>`,
       textContent: text,
       sender: {
-        name: "AI Chatbot",
+        name: "Snitch",
         email: Config.BREVO_SENDER_EMAIL,
       },
       to: [{ email: to }],
     });
 
-    console.log("✅ Email sent successfully via Brevo. Result:", result);
     return result;
   } catch (error) {
     console.error("❌ Brevo Email Error:", error.message);

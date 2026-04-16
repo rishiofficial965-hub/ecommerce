@@ -37,5 +37,5 @@ passport.use(
 );
 
 app.use("/api/auth", authRouter);
-app.use("/api/product", productRouter);
+app.use("/api/products", productRouter);
 export default app;

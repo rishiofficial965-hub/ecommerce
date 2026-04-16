@@ -128,7 +128,7 @@ export const otpTemplate = (otp, name) => {
                 <div class="logo-icon">
                     <div class="logo-diamond"></div>
                 </div>
-                <p class="logo-text">AI Chatbot</p>
+                <p class="logo-text">Snitch</p>
             </div>
             <div class="content">
                 <h1>Verify your email</h1>
@@ -142,7 +142,7 @@ export const otpTemplate = (otp, name) => {
                 <p class="ignore-note">If you didn't create an account, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                &copy; ${new Date().getFullYear()} AI Chatbot &nbsp;&middot;&nbsp; Empowering search with AI
+                &copy; ${new Date().getFullYear()} Snitch &nbsp;&middot;&nbsp; Empowering search with AI
             </div>
         </div>
     </body>
@@ -181,7 +181,7 @@ export const resetPasswordTemplate = (otp, name) => {
                 <div class="logo-icon">
                     <div class="logo-diamond"></div>
                 </div>
-                <p class="logo-text">AI Chatbot</p>
+                <p class="logo-text">Snitch</p>
             </div>
             <div class="content">
                 <div class="warning-badge">Password Reset</div>
@@ -196,7 +196,7 @@ export const resetPasswordTemplate = (otp, name) => {
                 <p class="ignore-note">If you didn't request a password reset, ignore this email — your password will remain unchanged.</p>
             </div>
             <div class="footer">
-                &copy; ${new Date().getFullYear()} AI Chatbot &nbsp;&middot;&nbsp; Empowering search with AI
+                &copy; ${new Date().getFullYear()} Snitch &nbsp;&middot;&nbsp; Empowering search with AI
             </div>
         </div>
     </body>

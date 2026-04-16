@@ -1,4 +1,5 @@
 import userModel from "../model/user.model.js";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Config } from "../config/env.js";
 import { sendEmail } from "../utils/sendEmail.js";
@@ -42,12 +43,10 @@ export const registerHandler = async (req, res) => {
     });
 
     if (existingUser) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "User with this email or contact already exists",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "User with this email or contact already exists",
+      });
     }
 
     const otp = generateOTP();
@@ -86,12 +85,10 @@ export const registerHandler = async (req, res) => {
     });
   } catch (err) {
     console.error("Register error:", err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Registration failed. Please try again.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed. Please try again.",
+    });
   }
 };
 
@@ -178,21 +175,17 @@ export const verifyOTP = async (req, res) => {
     }
 
     if (!user.otp || !user.otp.code) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "No OTP found. Please request a new one.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "No OTP found. Please request a new one.",
+      });
     }
 
     if (user.otp.expiresAt < Date.now()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "OTP has expired. Please request a new one.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one.",
+      });
     }
 
     if (user.otp.code !== otp) {
@@ -213,12 +206,10 @@ export const verifyOTP = async (req, res) => {
     );
   } catch (err) {
     console.error("VerifyOTP error:", err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Verification failed. Please try again.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Verification failed. Please try again.",
+    });
   }
 };
 
@@ -266,11 +257,125 @@ export const sendOTP = async (req, res) => {
       .json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
     console.error("SendOTP error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP. Please try again.",
+    });
+  }
+};
+
+export const forgetPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
     return res
-      .status(500)
-      .json({
+      .status(400)
+      .json({ success: false, message: "Email is required" });
+  }
+
+  try {
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (!user.isVerified) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User is not verified" });
+    }
+
+    const otp = generateOTP();
+    user.otp = {
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    };
+    await user.save();
+
+    const htmlContent = otpTemplate(otp, user.fullname);
+    await sendEmail(
+      user.email,
+      "Verify Your Email — Snitch",
+      `Your OTP is ${otp}`,
+      htmlContent,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
+      userId: user._id,
+    });
+  } catch (err) {
+    console.error("ForgetPassword error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP. Please try again.",
+    });
+  }
+};
+
+export const verifyResetOtp = async (req, res) => {
+  const { userId, otp , newPassword ,confirmPassword} = req.body;
+
+  if (!userId || !otp || !newPassword || !confirmPassword) {
+    return res
+      .status(400)
+      .json({ success: false, message: "userId and OTP and newPassword and confirmPassword are required" });
+  }
+
+  try {
+    if (newPassword !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Passwords do not match" });
+    }
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (!user.otp || !user.otp.code) {
+      return res.status(400).json({
         success: false,
-        message: "Failed to send OTP. Please try again.",
+        message: "No OTP found. Please request a new one.",
       });
+    }
+
+    if (user.otp.expiresAt < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one.",
+      });
+    }
+
+    if (user.otp.code !== otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid OTP. Please try again." });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.otp.code = undefined;
+    user.otp.expiresAt = undefined;
+    await user.save();
+
+    await sendTokenResponse(
+      user,
+      res,
+      "Password reset successfully! Welcome to Snitch.",
+    );
+  } catch (err) {
+    console.error("VerifyOTP error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Verification failed. Please try again.",
+    });
   }
 };

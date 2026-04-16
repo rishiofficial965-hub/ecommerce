@@ -9,6 +9,8 @@ import {
   googleCallbackHandler,
   verifyOTP,
   sendOTP,
+  forgetPassword,
+  verifyResetOtp,
 } from "../controllers/auth.controller.js";
 import passport from "passport";
 import { protect } from "../middleware/auth.middleware.js";
@@ -39,5 +41,8 @@ router.get(
 // BUG FIX: Changed /send-otp from GET to POST (it mutates data — creates a new OTP).
 router.post("/verify-otp", verifyOTP);
 router.post("/send-otp", sendOTP);
+
+router.post("/forget-password", forgetPassword);
+router.post("/verify-reset-otp", verifyResetOtp);
 
 export default router;

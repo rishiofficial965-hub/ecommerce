@@ -5,7 +5,13 @@ const authApiInstance = axios.create({
   withCredentials: true,
 });
 
-export async function register({ email, contact, password, fullname, isSeller }) {
+export async function register({
+  email,
+  contact,
+  password,
+  fullname,
+  isSeller,
+}) {
   const response = await authApiInstance.post("/register", {
     email,
     contact,
@@ -34,5 +40,20 @@ export async function verifyOTP({ userId, otp }) {
 
 export async function resendOTP({ userId }) {
   const response = await authApiInstance.post("/send-otp", { userId });
+  return response.data;
+}
+
+export async function forgetPassword({ email }) {
+  const response = await authApiInstance.post("/forget-password", { email });
+  return response.data;
+}
+
+export async function verifyResetOtp({ userId, otp, newPassword,confirmPassword }) {
+  const response = await authApiInstance.post("/verify-reset-otp", {
+    userId,
+    otp,
+    newPassword,
+    confirmPassword,
+  });
   return response.data;
 }

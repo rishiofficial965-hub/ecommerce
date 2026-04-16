@@ -30,6 +30,12 @@ export const protect = async (req, res, next) => {
         .json({ success: false, message: "User not found" });
     }
 
+    if (!req.user.isVerified) {
+      return res
+        .status(403)
+        .json({ success: false, message: "User is not verified" });
+    }
+
     next();
   } catch (error) {
     return res
