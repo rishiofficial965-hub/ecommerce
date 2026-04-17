@@ -22,9 +22,10 @@ export async function register({
   return response.data;
 }
 
-export async function login({ email, password }) {
+export async function login({ email, username, password }) {
   const response = await authApiInstance.post("/login", {
     email,
+    username,
     password,
   });
   return response.data;
@@ -43,8 +44,8 @@ export async function resendOTP({ userId }) {
   return response.data;
 }
 
-export async function forgetPassword({ email }) {
-  const response = await authApiInstance.post("/forget-password", { email });
+export async function forgetPassword({ email, username }) {
+  const response = await authApiInstance.post("/forget-password", { email, username });
   return response.data;
 }
 
@@ -55,5 +56,15 @@ export async function verifyResetOtp({ userId, otp, newPassword,confirmPassword 
     newPassword,
     confirmPassword,
   });
+  return response.data;
+}
+
+export async function getMe() {
+  const user = await authApiInstance.get("/get-Me");
+  return user.data;
+}
+
+export async function logoutApi() {
+  const response = await authApiInstance.post("/logout");
   return response.data;
 }

@@ -20,7 +20,7 @@ export const validationRegisterUser = [
     .withMessage("contact must be a 10-digit number"),
   body("password")
     .isLength({ min: 6 })
-    .withMessage("Password must br at least 6 character long"),
+    .withMessage("Password must be at least 6 characters long"),
   body("fullname")
     .notEmpty()
     .withMessage("full name is required")
@@ -32,10 +32,15 @@ export const validationRegisterUser = [
 ];
 
 export const validationLoginUser = [
-  body("email").isEmail().withMessage("Invalid email format"),
   body("password")
     .isLength({ min: 6 })
-    .withMessage("Password must br at least 6 character long"),
+    .withMessage("Password must be at least 6 characters long"),
+  body().custom((value, { req }) => {
+    if (!req.body.email && !req.body.username) {
+      throw new Error("Email or username is required");
+    }
+    return true;
+  }),
 
   validationRequest,
 ];

@@ -1,14 +1,19 @@
-import { RouterProvider } from 'react-router-dom'
-import { Provider } from 'react-redux'
-import { store } from './app.store'
-import { routes } from './app.routes'
+import { RouterProvider } from "react-router-dom";
+import { routes } from "./app.routes.jsx";
+import { useEffect, useState } from "react";
+import { useAuth } from "../features/auth/hook/useAuth.js";
+import Loader from "../features/auth/components/Loader.jsx";
 
 const App = () => {
-  return (
-    <Provider store={store}>
-      <RouterProvider router={routes} />
-    </Provider>
-  )
-}
+  const { handleGetMe } = useAuth();
+  const [initializing, setInitializing] = useState(true);
 
-export default App
+  useEffect(() => {
+    handleGetMe().finally(() => setInitializing(false));
+  }, []);
+
+  if (initializing) return <Loader />;
+  return <RouterProvider router={routes} />;
+};
+
+export default App;

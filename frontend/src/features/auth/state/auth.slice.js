@@ -11,7 +11,11 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action) => {
       state.user = action.payload;
-      state.pendingUserId = null; 
+      // Only clear pendingUserId when a real user is set (login/verify success),
+      // not when setUser(null) is called (e.g. failed getMe on page load).
+      if (action.payload) {
+        state.pendingUserId = null;
+      }
     },
     setLoading: (state, action) => {
       state.loading = action.payload;

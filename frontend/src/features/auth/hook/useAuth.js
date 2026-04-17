@@ -5,6 +5,7 @@ import {
   setLoading,
   setUser,
   setPendingUserId,
+  logout,
 } from "../state/auth.slice.js";
 import {
   register,
@@ -13,11 +14,12 @@ import {
   resendOTP,
   forgetPassword,
   verifyResetOtp,
+  getMe,
+  logoutApi,
 } from "../services/auth.api.js";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const loading = useSelector((state) => state.auth.loading);
   const pendingUserId = useSelector((state) => state.auth.pendingUserId);
 
@@ -42,8 +44,7 @@ export const useAuth = () => {
       // Store the userId in Redux so VerifyOTPPage can use it
       dispatch(setPendingUserId(data.userId));
 
-      // Redirect to OTP verification page
-      navigate("/verify-otp");
+     
 
       return { success: true };
     } catch (error) {
@@ -59,13 +60,13 @@ export const useAuth = () => {
     }
   }
 
-  async function handleLogin({ email, password }) {
+  async function handleLogin({ email, username, password }) {
     try {
       dispatch(setLoading(true));
       dispatch(setError(null));
-      const data = await login({ email, password });
+      const data = await login({ email, username, password });
       dispatch(setUser(data.user));
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (error) {
       const msg =
         error.response?.data?.message ||
@@ -73,6 +74,14 @@ export const useAuth = () => {
         error.message ||
         "An unexpected error occurred";
       dispatch(setError(msg));
+
+      // If user is unverified (403), store the userId so frontend can redirect to /verify-otp
+      const userId = error.response?.data?.userId;
+      if (error.response?.status === 403 && userId) {
+        dispatch(setPendingUserId(userId));
+        return { success: false, error: msg, unverified: true };
+      }
+
       return { success: false, error: msg };
     } finally {
       dispatch(setLoading(false));
@@ -85,8 +94,7 @@ export const useAuth = () => {
       dispatch(setError(null));
       const data = await verifyOTP({ userId, otp });
       dispatch(setUser(data.user));
-      navigate("/");
-      return { success: true };
+      return { success: true, user: data.user };
     } catch (error) {
       const msg =
         error.response?.data?.message ||
@@ -114,13 +122,12 @@ export const useAuth = () => {
       dispatch(setLoading(false));
     }
   }
-  async function handleForgetPassword({ email }) {
+  async function handleForgetPassword({ email, username }) {
     try {
       dispatch(setLoading(true));
       dispatch(setError(null));
-      const data = await forgetPassword({ email });
+      const data = await forgetPassword({ email, username });
       dispatch(setPendingUserId(data.userId));
-      navigate("/forget-password");
       return { success: true };
     } catch (error) {
       const msg = error.response?.data?.message || error.message;
@@ -131,13 +138,18 @@ export const useAuth = () => {
     }
   }
 
-  async function handleResetPasswordOtp({ userId, otp, newPassword ,confirmPassword }) {
+  async function handleResetPasswordOtp({
+    userId,
+    otp,
+    newPassword,
+    confirmPassword,
+  }) {
     try {
       dispatch(setLoading(true));
       dispatch(setError(null));
-      await verifyResetOtp({ userId, otp, newPassword ,confirmPassword });
-      navigate("/");
-      return { success: true };
+      const data = await verifyResetOtp({ userId, otp, newPassword, confirmPassword });
+      dispatch(setUser(data.user));
+      return { success: true, user: data.user };
     } catch (error) {
       const msg = error.response?.data?.message || error.message;
       dispatch(setError(msg));
@@ -146,13 +158,45 @@ export const useAuth = () => {
       dispatch(setLoading(false));
     }
   }
+
+  async function handleGetMe() {
+    try {
+      dispatch(setLoading(true));
+      const data = await getMe();
+      // getMe() returns response.data which is { user: {...} }
+      // We must unwrap .user before dispatching, otherwise state.auth.user
+      // becomes { user: {...} } instead of the actual user object.
+      dispatch(setUser(data.user));
+      return { success: true };
+    } catch (err) {
+      // On 401/error, user is not authenticated — keep user as null
+      dispatch(setUser(null));
+      return { success: false };
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await logoutApi();
+    } catch (err) {
+      // Even if the API call fails, clear local state
+      console.error("Logout API error:", err);
+    } finally {
+      dispatch(logout());
+    }
+  }
+
   return {
+    handleGetMe,
     handleRegister,
     handleLogin,
     handleVerifyOTP,
     handleResendOTP,
     handleForgetPassword,
     handleResetPasswordOtp,
+    handleLogout,
     loading,
     pendingUserId,
   };

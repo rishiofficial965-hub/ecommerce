@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Nav from "../components/Nav";
+import { useSelector } from "react-redux";
+import Nav from "../../products/components/Nav";
 import Loader from "../components/Loader";
 import { useAuth } from "../hook/useAuth";
 
@@ -11,12 +12,23 @@ const LoginForm = () => {
   const [eyetoggle, setEyetoggle] = useState(true);
   const [useEmailLogin, setUseEmailLogin] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { handleLogin, handleForgetPassword, loading } = useAuth();
+  const user = useSelector((state) => state.auth.user);
+ 
+  useEffect(() => {
+    if (user) {
+      if (user.role === "seller") {
+        navigate("/seller/dashboard");
+      } else {
+        navigate("/");
+      }
+    }
+  }, [user, navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError(""); 
+    setError("");
 
     const credentials = useEmailLogin
       ? { email, password }
@@ -27,10 +39,17 @@ const LoginForm = () => {
     if (!result.success) {
       setError(result.error || "Invalid credentials");
       setPassword("");
+      // If backend says user is unverified, redirect to OTP verification
+      if (result.unverified) {
+        navigate("/verify-otp");
+      }
       return;
     }
 
-    navigate("/");
+    const redirectPath =
+      result.user.role === "buyer" ? "/" : "/seller/dashboard";
+
+    navigate(redirectPath);
     setEmail("");
     setUsername("");
     setPassword("");
@@ -44,14 +63,17 @@ const LoginForm = () => {
     }
 
     if (!email) {
-      setError("Please enter your email address first.");
+      setError("Please enter your email address.");
       return;
     }
 
-    const result = await handleForgetPassword({ email });
+    const payload = useEmailLogin ? { email } : { username };
+    const result = await handleForgetPassword(payload);
     if (!result.success) {
       setError(result.error);
+      return;
     }
+    navigate("/forget-password");
   };
 
   const inputClass =
@@ -60,13 +82,13 @@ const LoginForm = () => {
   if (loading) return <Loader />;
 
   return (
-    <main className="relative flex justify-center items-center min-h-screen bg-desert-khaki overflow-hidden pt-32 pb-10">
+    <div className="min-h-screen bg-desert-khaki flex flex-col">
       <Nav />
-
-      <div
-        className="relative z-10 flex flex-col items-center gap-4 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
-shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
-      >
+      <main className="flex-1 flex flex-col justify-center items-center p-4 pb-10">
+        <div
+          className="relative z-10 flex flex-col items-center gap-4 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
+  shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
+        >
         <div className="flex flex-col items-center gap-2">
           <div className="w-12 h-12 rounded-full bg-copper-green flex items-center justify-center mb-2 shadow-[0_5px_15px_rgba(63,78,60,0.2)]">
             <div className="w-6 h-6 bg-albescent-white rounded-sm animate-soft-rotate"></div>
@@ -174,12 +196,13 @@ shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
         </p>
       </div>
 
-      <div className="absolute bottom-6 flex gap-4 text-[11px] text-lacquered-licorice/30 font-medium tracking-wide">
+      <div className="mt-8 flex gap-4 text-[11px] text-lacquered-licorice/30 font-medium tracking-wide">
         <span>Terms of use</span>
         <span className="w-1 h-1 bg-lacquered-licorice/20 rounded-full mt-1.5"></span>
         <span>Privacy policy</span>
       </div>
-    </main>
+      </main>
+    </div>
   );
 };
 

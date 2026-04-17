@@ -6,6 +6,10 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { generateOTP } from "../utils/generateOTP.js";
 import { otpTemplate } from "../utils/emailTemplate.js";
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const createToken = (id) => {
   return jwt.sign({ id }, Config.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -16,8 +20,8 @@ async function sendTokenResponse(user, res, message) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    role: user.role,
   });
 
   return res.status(200).json({
@@ -35,11 +39,12 @@ async function sendTokenResponse(user, res, message) {
 }
 
 export const registerHandler = async (req, res) => {
-  const { email, contact, password, fullname, isSeller } = req.body;
+  const { contact, password, fullname, isSeller } = req.body;
+  const email = req.body.email?.toLowerCase();
 
   try {
     const existingUser = await userModel.findOne({
-      $or: [{ email }, { contact }],
+      $or: [{ email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') } }, { contact }],
     });
 
     if (existingUser) {
@@ -93,15 +98,30 @@ export const registerHandler = async (req, res) => {
 };
 
 export const loginHandler = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
+  const email = req.body.email?.toLowerCase();
 
   try {
-    const user = await userModel.findOne({ email });
+    // Support login by email or by username (fullname)
+    let user;
+    if (email) {
+      user = await userModel.findOne({ email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') } });
+    } else if (username) {
+      user = await userModel.findOne({ fullname: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') } });
+    }
 
     if (!user) {
       return res
         .status(400)
         .json({ success: false, message: "User not found" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email before logging in.",
+        userId: user._id,
+      });
     }
 
     const isPasswordValid = await user.comparePassword(password);
@@ -140,6 +160,7 @@ export const googleCallbackHandler = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -265,16 +286,20 @@ export const sendOTP = async (req, res) => {
 };
 
 export const forgetPassword = async (req, res) => {
-  const { email } = req.body;
+  const email = req.body.email?.toLowerCase();
+  const username = req.body.username?.toLowerCase();
 
-  if (!email) {
+  if (!email && !username) {
     return res
       .status(400)
-      .json({ success: false, message: "Email is required" });
+      .json({ success: false, message: "Email or username is required" });
   }
 
   try {
-    const user = await userModel.findOne({ email });
+    const query = [];
+    if (email) query.push({ email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') } });
+    if (username) query.push({ fullname: { $regex: new RegExp(`^${escapeRegex(username)}$`, 'i') } });
+    const user = await userModel.findOne({ $or: query });
 
     if (!user) {
       return res
@@ -318,12 +343,14 @@ export const forgetPassword = async (req, res) => {
 };
 
 export const verifyResetOtp = async (req, res) => {
-  const { userId, otp , newPassword ,confirmPassword} = req.body;
+  const { userId, otp, newPassword, confirmPassword } = req.body;
 
   if (!userId || !otp || !newPassword || !confirmPassword) {
-    return res
-      .status(400)
-      .json({ success: false, message: "userId and OTP and newPassword and confirmPassword are required" });
+    return res.status(400).json({
+      success: false,
+      message:
+        "userId and OTP and newPassword and confirmPassword are required",
+    });
   }
 
   try {
@@ -360,8 +387,10 @@ export const verifyResetOtp = async (req, res) => {
         .json({ success: false, message: "Invalid OTP. Please try again." });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    // Set the raw password — the pre-save hook will hash it.
+    // Do NOT hash here, otherwise save() double-hashes and the user
+    // can never log in again after a password reset.
+    user.password = newPassword;
     user.otp.code = undefined;
     user.otp.expiresAt = undefined;
     await user.save();
@@ -379,3 +408,27 @@ export const verifyResetOtp = async (req, res) => {
     });
   }
 };
+
+export async function getMe(req, res) {
+  try {
+    // req.user is already populated by the protect middleware (without password).
+    // Re-querying without .select("-password") would leak the password hash.
+    return res.status(200).json({ user: req.user });
+  } catch (err) {
+    console.error("GetMe error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get user. Please try again.",
+    });
+  }
+}
+
+export async function logoutHandler(req, res) {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+  });
+  return res.status(200).json({ success: true, message: "Logged out successfully" });
+}

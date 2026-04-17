@@ -35,7 +35,7 @@ export const protect = async (req, res, next) => {
         .status(403)
         .json({ success: false, message: "User is not verified" });
     }
-
+    
     next();
   } catch (error) {
     return res
@@ -47,7 +47,7 @@ export const protect = async (req, res, next) => {
 export const authenticateSeller = async (req, res, next) => {
   const token = req.cookies.token;
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ success: false, message: "Not authorized, no token" });
   }
   try {
     const decoded = jwt.verify(token, Config.JWT_SECRET);
@@ -60,8 +60,9 @@ export const authenticateSeller = async (req, res, next) => {
     if (user.role !== "seller") {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
+    req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ success: false, message: "Not authorized, token failed" });
   }
 };

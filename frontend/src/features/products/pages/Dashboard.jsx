@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 const Dashboard = () => {
   const { handleGetSellerProducts } = useProduct();
   const sellerProducts = useSelector((state) => state.product.sellerProducts);
-  const loading = useSelector((state) => state.auth.loading);
+  const loading = useSelector((state) => state.product.loading);
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
@@ -29,20 +29,21 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-desert-khaki flex flex-col">
       <Nav />
-      
+
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div className="animate-drop-bounce">
             <h1 className="text-4xl font-black text-lacquered-licorice tracking-tighter mb-2">
-              Welcome back, <span className="text-copper-green">{user?.fullname?.split(' ')[0] || "Seller"}!</span>
+              Welcome back,{" "}
+              <span className="text-copper-green">
+                {user?.fullname?.split(" ")[0] || "Seller"}!
+              </span>
             </h1>
             <p className="text-lacquered-licorice/60 font-medium">
               Here's what's happening with your store today.
             </p>
           </div>
-          
-          
         </div>
 
         {/* Stats Grid */}
@@ -60,7 +61,7 @@ const Dashboard = () => {
               </h2>
             </div>
           </div>
-          
+
           {/* Placeholder Stats for Visual Balance */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-lacquered-licorice/5 flex items-center gap-6 opacity-60">
             <div className="w-16 h-16 bg-playing-hooky/10 rounded-2xl flex items-center justify-center text-playing-hooky">
@@ -99,7 +100,10 @@ const Dashboard = () => {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-2xl h-[400px] animate-pulse">
+              <div
+                key={i}
+                className="bg-white rounded-2xl h-[400px] animate-pulse"
+              >
                 <div className="h-48 bg-lacquered-licorice/5 rounded-t-2xl"></div>
                 <div className="p-5 space-y-4">
                   <div className="h-6 bg-lacquered-licorice/5 rounded w-3/4"></div>
@@ -133,7 +137,8 @@ const Dashboard = () => {
               No products yet
             </h3>
             <p className="text-lacquered-licorice/50 font-medium max-w-sm mb-8">
-              Start your selling journey by adding your first product to the catalog.
+              Start your selling journey by adding your first product to the
+              catalog.
             </p>
             <Link
               to="/seller/create-product"
@@ -144,7 +149,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
-      
+
       <footer className="py-10 border-t border-lacquered-licorice/5 text-center">
         <p className="text-sm font-bold text-lacquered-licorice/30 uppercase tracking-[0.2em]">
           © 2026 SNITCH SELLER PLATFORM

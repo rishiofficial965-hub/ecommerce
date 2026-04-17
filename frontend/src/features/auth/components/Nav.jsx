@@ -7,8 +7,11 @@ const Nav = () => {
   return (
     <nav className="absolute top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-albescent-white/80 backdrop-blur-xl rounded-full px-8 py-3 flex items-center justify-between border border-copper-green/20 z-50">
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
-        <span className="text-lacquered-licorice text-2xl font-light tracking-wide">
-          <b>Snitch</b>
+        <div className="w-10 h-10 bg-copper-green rounded-xl flex items-center justify-center text-albescent-white font-black text-xl shadow-lg ">
+          S
+        </div>
+        <span className="text-2xl font-black tracking-tighter text-lacquered-licorice group-hover:text-copper-green transition-colors">
+          SNITCH
         </span>
       </Link>
 

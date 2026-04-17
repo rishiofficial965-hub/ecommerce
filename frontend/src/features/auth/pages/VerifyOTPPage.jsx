@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Nav from "../components/Nav";
+import Nav from "../../products/components/Nav";
 import Loader from "../components/Loader";
 import { useAuth } from "../hook/useAuth.js";
 
@@ -76,8 +76,13 @@ const VerifyOTPPage = () => {
       setError(result.error || "Verification failed. Please try again.");
       setDigits(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
+      return; // stop here — do not try to access result.user on failure
     }
-    // On success, useAuth navigates to "/" automatically
+
+    const redirectPath =
+      result.user.role === "buyer" ? "/" : "/seller/dashboard";
+
+    navigate(redirectPath);
   };
 
   const handleResend = async () => {
@@ -100,20 +105,11 @@ const VerifyOTPPage = () => {
   if (loading) return <Loader />;
 
   return (
-    <main className="relative flex justify-center items-center min-h-screen bg-desert-khaki overflow-hidden pt-32 pb-10">
+    <div className="min-h-screen bg-desert-khaki flex flex-col">
       <Nav />
-
       {/* Subtle ambient blobs matching the site theme */}
-      <div
-        className="absolute top-20 left-1/4 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none"
-        style={{ background: "radial-gradient(circle, #3F4E3C, transparent)" }}
-      />
-      <div
-        className="absolute bottom-20 right-1/4 w-60 h-60 rounded-full opacity-10 blur-3xl pointer-events-none"
-        style={{ background: "radial-gradient(circle, #8C937C, transparent)" }}
-      />
-
-      <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-8 shadow-[0_10px_30px_rgba(63,78,60,0.12)]">
+      <main className="flex-1 flex flex-col justify-center items-center p-4">
+        <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-md bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-10 shadow-[0_10px_30px_rgba(63,78,60,0.1)]">
 
         {/* Logo + Header */}
         <div className="flex flex-col items-center gap-2">
@@ -207,12 +203,13 @@ const VerifyOTPPage = () => {
       </div>
 
       {/* Footer links */}
-      <div className="absolute bottom-6 flex gap-4 text-[11px] text-lacquered-licorice/30 font-medium tracking-wide">
+      <div className="mt-8 flex gap-4 text-[11px] text-lacquered-licorice/30 font-medium tracking-wide">
         <span>Terms of use</span>
         <span className="w-1 h-1 bg-lacquered-licorice/20 rounded-full mt-1.5" />
         <span>Privacy policy</span>
       </div>
-    </main>
+      </main>
+    </div>
   );
 };
 

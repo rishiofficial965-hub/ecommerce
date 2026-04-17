@@ -11,6 +11,8 @@ import {
   sendOTP,
   forgetPassword,
   verifyResetOtp,
+  getMe,
+  logoutHandler,
 } from "../controllers/auth.controller.js";
 import passport from "passport";
 import { protect } from "../middleware/auth.middleware.js";
@@ -37,12 +39,14 @@ router.get(
   googleCallbackHandler,
 );
 
-// BUG FIX: Removed `protect` middleware — user has no JWT yet at this stage.
-// BUG FIX: Changed /send-otp from GET to POST (it mutates data — creates a new OTP).
 router.post("/verify-otp", verifyOTP);
 router.post("/send-otp", sendOTP);
 
 router.post("/forget-password", forgetPassword);
 router.post("/verify-reset-otp", verifyResetOtp);
+
+router.get("/get-Me", protect, getMe);
+router.post("/logout", logoutHandler);
+
 
 export default router;
