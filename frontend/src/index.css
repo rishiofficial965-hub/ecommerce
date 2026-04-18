@@ -41,3 +41,28 @@ body {
 .animate-soft-rotate {
   animation: soft-rotate 8s linear infinite;
 }
+
+/* Custom Scrollbar Hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Swiper Customizations */
+.swiper-pagination-bullet {
+  background: var(--c-copper-green) !important;
+  opacity: 0.3;
+}
+
+.swiper-pagination-bullet-active {
+  opacity: 1;
+  width: 20px !important;
+  border-radius: 4px !important;
+}
+
+.swiper-pagination {
+  bottom: 2rem !important;
+}

@@ -1,8 +1,13 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../auth/hook/useAuth.js";
-import { FaPlus, FaSignOutAlt, FaTachometerAlt, FaUserPlus, FaSignInAlt } from "react-icons/fa";
+import {
+  FaPlus,
+  FaSignOutAlt,
+  FaTachometerAlt,
+  FaUserPlus,
+  FaSignInAlt,
+} from "react-icons/fa";
 
 const Nav = () => {
   const navigate = useNavigate();
@@ -60,7 +65,9 @@ const Nav = () => {
                 className="flex items-center gap-2 bg-copper-green text-albescent-white px-4 py-2 rounded-xl hover:bg-lacquered-licorice transition-all duration-300 shadow-md hover:shadow-xl group"
               >
                 <FaPlus className="group-hover:rotate-90 transition-transform duration-300" />
-                <span className="hidden md:inline font-bold">Create Product</span>
+                <span className="hidden md:inline font-bold">
+                  Create Product
+                </span>
               </Link>
             </>
           ) : null}

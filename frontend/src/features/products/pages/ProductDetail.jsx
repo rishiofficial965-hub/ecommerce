@@ -1,0 +1,231 @@
+import { useNavigate, useParams } from "react-router-dom";
+import { useProduct } from "../hooks/useProduct";
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import Loader from "../../auth/components/Loader";
+import Nav from "../components/Nav";
+import { FaShoppingCart, FaHeart, FaChevronLeft, FaChevronRight, FaShieldAlt, FaTruck, FaUndo, FaArrowLeft } from "react-icons/fa";
+
+// Swiper imports
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Autoplay, EffectFade } from "swiper/modules";
+
+// Swiper styles
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/effect-fade";
+
+const ProductDetail = () => {
+  const navigate = useNavigate()
+  const { productId } = useParams();
+  const { handleGetProductDetails } = useProduct();
+  const loading = useSelector((state) => state.product.loading);
+
+  const [product, setProduct] = useState(null);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  async function getProductDetails() {
+    const res = await handleGetProductDetails(productId);
+    setProduct(res);
+  }
+
+  useEffect(() => {
+    getProductDetails();
+  }, [productId]);
+
+  if (loading && !product) return <Loader />;
+
+  // Handle both null product and error objects returned by the hook
+  if (!product || product.error) {
+    return (
+      <div className="min-h-screen bg-albescent-white flex flex-col font-sans">
+        <Nav />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <h1 className="text-3xl font-black text-lacquered-licorice mb-4 uppercase">
+            {product?.error ? "Error Loading Product" : "Product Not Found"}
+          </h1>
+          <p className="text-lacquered-licorice/60 mb-8 italic max-w-sm text-sm">
+            {product?.error || "The product you are looking for might have been removed or is unavailable."}
+          </p>
+          <button 
+            onClick={() => navigate("/")}
+            className="bg-copper-green text-albescent-white px-6 py-2.5 rounded-full font-black tracking-widest text-xs hover:bg-lacquered-licorice transition-all shadow-lg active:scale-95"
+          >
+            BACK TO HOME
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-albescent-white flex flex-col font-sans px-2 sm:px-0">
+      <Nav />
+
+      <main className="flex-1 container mx-auto max-w-6xl px-6 py-4 md:py-8">
+        {/* Back Button */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="mb-6 flex items-center gap-2 text-lacquered-licorice/60 hover:text-copper-green transition-colors group"
+        >
+          <div className="w-8 h-8 rounded-full border border-lacquered-licorice/10 flex items-center justify-center group-hover:bg-copper-green group-hover:text-albescent-white transition-all shadow-sm">
+            <FaArrowLeft size={12} />
+          </div>
+          <span className="font-black uppercase tracking-widest text-[10px]">Go Back</span>
+        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+          
+          {/* Left: Product Images (Swiper) */}
+          <div className="space-y-4 animate-drop-bounce w-full max-w-lg mx-auto lg:mx-0">
+            <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-desert-khaki/10 border border-lacquered-licorice/5 shadow-xl group">
+              <Swiper
+                modules={[Navigation, Pagination, Autoplay, EffectFade]}
+                effect="fade"
+                navigation={{
+                  prevEl: ".swiper-prev",
+                  nextEl: ".swiper-next",
+                }}
+                pagination={{ clickable: true, dynamicBullets: true }}
+                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                className="w-full h-full"
+                onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
+              >
+                {product.images?.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <img
+                      src={image.url}
+                      alt={`${product.title} - ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+
+              {/* Custom Navigation Buttons */}
+              <button className="swiper-prev absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-albescent-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-lacquered-licorice z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-copper-green hover:text-albescent-white shadow-lg">
+                <FaChevronLeft size={14} />
+              </button>
+              <button className="swiper-next absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-albescent-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-lacquered-licorice z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-copper-green hover:text-albescent-white shadow-lg">
+                <FaChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Thumbnail Gallery (Desktop) */}
+            <div className="hidden md:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {product.images?.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImageIndex(index)}
+                  className={`relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                    activeImageIndex === index ? "border-copper-green scale-105 shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={image.url} className="w-full h-full object-cover" alt="thumbnail" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Product Details */}
+          <div className="flex flex-col space-y-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="px-2 py-0.5 bg-playing-hooky/10 text-playing-hooky text-[9px] font-black tracking-widest uppercase rounded-full border border-playing-hooky/20">
+                  {product.category || "Premium Edit"}
+                </span>
+                {product.stock <= 5 && product.stock > 0 && (
+                  <span className="text-[9px] font-black text-red-500 uppercase tracking-widest italic">
+                    Only {product.stock} left!
+                  </span>
+                )}
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-lacquered-licorice tracking-tighter uppercase leading-tight">
+                {product.title}
+              </h1>
+              {product.price && (
+                <div className="flex items-baseline gap-3">
+                  <span className="text-2xl font-black text-copper-green">
+                    {product.price?.currency} {product.price.amount?.toLocaleString()}
+                  </span>
+                  <span className="text-xs font-bold text-lacquered-licorice/30 line-through">
+                    {product.price?.currency} {(product.price.amount * 1.25).toFixed(0)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-desert-khaki/20 rounded-2xl border border-lacquered-licorice/5">
+              <p className="text-lacquered-licorice/70 text-sm font-medium leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+
+            {/* Size Selection Placeholder (if applicable) */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Select Size</h3>
+                <button className="text-[9px] font-black border-b border-lacquered-licorice tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">Size Guide</button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["S", "M", "L", "XL", "XXL"].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black transition-all duration-300 border-2 ${
+                      selectedSize === size
+                        ? "bg-lacquered-licorice text-albescent-white border-lacquered-licorice"
+                        : "bg-transparent text-lacquered-licorice/40 border-lacquered-licorice/10 hover:border-lacquered-licorice/40"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button className="flex-1 group bg-copper-green text-albescent-white py-3.5 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95">
+                <FaShoppingCart size={14} className="group-hover:scale-110 transition-transform" />
+                ADD TO BAG
+              </button>
+              <button className="w-full sm:w-14 h-11 sm:h-auto rounded-2xl border-2 border-lacquered-licorice/10 flex items-center justify-center text-lacquered-licorice hover:bg-lacquered-licorice hover:text-albescent-white transition-all duration-300 group shadow-sm">
+                <FaHeart size={14} className="group-hover:scale-110 transition-transform" />
+              </button>
+            </div>
+
+            {/* Features/Trust Badges */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-lacquered-licorice/5">
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <FaTruck className="text-copper-green text-lg" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">Free Shipping</span>
+              </div>
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <FaUndo className="text-copper-green text-lg" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">7-Day Returns</span>
+              </div>
+              <div className="flex flex-col items-center text-center gap-1.5">
+                <FaShieldAlt className="text-copper-green text-lg" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">Secure Payment</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer (Simplified) */}
+      <footer className="py-8 bg-lacquered-licorice text-albescent-white/20">
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-[9px] font-black tracking-[0.4em] uppercase">
+            © 2026 SNITCH CLOTHING PVT LTD. ALL RIGHTS RESERVED.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default ProductDetail;

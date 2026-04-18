@@ -6,15 +6,18 @@ export async function createProduct(req, res) {
     const { title, description, priceAmount, priceCurrency } = req.body;
 
     if (!title || !description || !priceAmount || !priceCurrency) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
     const images = await Promise.all(
       req.files.map(async (file) => {
-        return await uploadFile({
+        const uploadResult = await uploadFile({
           buffer: file.buffer,
           fileName: file.originalname,
         });
+        return { url: uploadResult.url };
       }),
     );
 
@@ -29,10 +32,25 @@ export async function createProduct(req, res) {
       Seller: req.user._id,
     });
 
-    return res.status(201).json({ success: true, message: "Product created successfully", product });
+    return res
+      .status(201)
+      .json({
+        success: true,
+        message: "Product created successfully",
+        product,
+      });
   } catch (err) {
-    console.error("CreateProduct error:", err);
-    return res.status(500).json({ success: false, message: "Failed to create product. Please try again." });
+    console.error("CreateProduct error details:", {
+      message: err.message,
+      stack: err.stack,
+      error: err,
+    });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to create product. Please try again.",
+      });
   }
 }
 
@@ -42,7 +60,9 @@ export async function getSellerProducts(req, res) {
     return res.status(200).json({ success: true, products });
   } catch (err) {
     console.error("GetSellerProducts error:", err);
-    return res.status(500).json({ success: false, message: "Failed to fetch products." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch products." });
   }
 }
 
@@ -52,6 +72,21 @@ export async function getAllProducts(req, res) {
     return res.status(200).json({ success: true, products });
   } catch (err) {
     console.error("GetAllProducts error:", err);
-    return res.status(500).json({ success: false, message: "Failed to fetch products." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch products." });
+  }
+}
+
+export async function getProductDetails(req, res) {
+  try {
+    const { id } = req.params;
+    const product = await productModel.findById(id);
+    return res.status(200).json({ success: true, product });
+  } catch (err) {
+    console.error("GetProductDetails error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch product." });
   }
 }
