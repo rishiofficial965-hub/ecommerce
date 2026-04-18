@@ -4,26 +4,26 @@ import { useSelector } from "react-redux";
 import Nav from "../components/Nav.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import { FaBoxOpen, FaChartLine, FaPlus } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const { handleGetSellerProducts } = useProduct();
+  const { handleGetSellerProducts, handleDeleteProduct } = useProduct();
   const sellerProducts = useSelector((state) => state.product.sellerProducts);
   const loading = useSelector((state) => state.product.loading);
   const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+
+  const handleDelete = async (productId) => {
+    const res = await handleDeleteProduct(productId);
+    if (res.success) handleGetSellerProducts();
+  };
 
   useEffect(() => {
     handleGetSellerProducts();
   }, []);
 
-  const handleEdit = (product) => {
-    console.log("Edit product", product);
-    // Future implementation
-  };
-
-  const handleDelete = (productId) => {
-    console.log("Delete product", productId);
-    // Future implementation
+  const handleEdit = (product_id) => {
+    navigate(`/seller/product/${product_id}`);
   };
 
   return (
@@ -48,7 +48,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-lacquered-licorice/5 flex items-center gap-6 group hover:border-copper-green/20 transition-colors">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-lacquered-licorice/5 flex items-center gap-6 group hover:border-copper-green/20 transition-colors cursor-pointer">
             <div className="w-16 h-16 bg-copper-green/10 rounded-2xl flex items-center justify-center text-copper-green group-hover:scale-110 transition-transform">
               <FaBoxOpen size={30} />
             </div>
@@ -63,7 +63,7 @@ const Dashboard = () => {
           </div>
 
           {/* Placeholder Stats for Visual Balance */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-lacquered-licorice/5 flex items-center gap-6 opacity-60">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-lacquered-licorice/5 flex items-center gap-6 opacity-60 cursor-pointer">
             <div className="w-16 h-16 bg-playing-hooky/10 rounded-2xl flex items-center justify-center text-playing-hooky">
               <FaChartLine size={30} />
             </div>
@@ -74,7 +74,7 @@ const Dashboard = () => {
               <h2 className="text-3xl font-black text-lacquered-licorice">0</h2>
             </div>
           </div>
-          <div className="bg-copper-green p-6 rounded-3xl shadow-xl flex items-center gap-6 text-albescent-white">
+          <div className="bg-copper-green p-6 rounded-3xl shadow-xl flex items-center gap-6 text-albescent-white cursor-pointer">
             <div className="w-16 h-16 bg-albescent-white/20 rounded-2xl flex items-center justify-center">
               <div className="text-2xl font-black">₹</div>
             </div>

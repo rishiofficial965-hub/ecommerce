@@ -23,3 +23,8 @@ export const getProductDetails = async (id) => {
   const response = await productApi.get(`/details/${id}`);
   return response.data;
 };
+
+export async function deleteProductApi(id) {
+  const response = await productApi.delete(`/delete/${id}`);
+  return response.data;
+}

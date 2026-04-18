@@ -188,6 +188,8 @@ export const useAuth = () => {
     }
   }
 
+  
+
   return {
     handleGetMe,
     handleRegister,

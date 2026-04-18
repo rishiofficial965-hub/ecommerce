@@ -8,6 +8,9 @@ import Dashboard from "../features/products/pages/Dashboard.jsx";
 import Protected from "../features/products/components/Protected.jsx";
 import Home from "../features/products/pages/Home.jsx";
 import ProductDetail from "../features/products/pages/ProductDetail.jsx";
+import SellerProductDetails from "../features/products/pages/SellerProductDetails.jsx";
+
+
 export const routes = createBrowserRouter([
   {
     path: "/",
@@ -30,7 +33,7 @@ export const routes = createBrowserRouter([
     element: <ForgetPassword />,
   },
   {
-    path: "/product/:productId",
+    path: "/details/:productId",
     element: <ProductDetail />,
   },
   {
@@ -49,6 +52,14 @@ export const routes = createBrowserRouter([
         element: (
           <Protected>
             <Dashboard />
+          </Protected>
+        ),
+      },
+      {
+        path: "product/:productId",
+        element: (
+          <Protected>
+            <SellerProductDetails />
           </Protected>
         ),
       },

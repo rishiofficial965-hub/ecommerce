@@ -28,7 +28,7 @@ const ProductCard = ({ product, onEdit, onDelete }) => {
         
         <div className="flex items-center gap-3 pt-4 border-t border-lacquered-licorice/5">
           <button
-            onClick={() => onEdit(product)}
+            onClick={() => onEdit(product._id)}
             className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-playing-hooky/10 text-playing-hooky hover:bg-playing-hooky hover:text-white transition-all duration-200 text-sm font-medium"
           >
             <FaEdit size={14} />

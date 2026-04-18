@@ -90,3 +90,16 @@ export async function getProductDetails(req, res) {
       .json({ success: false, message: "Failed to fetch product." });
   }
 }
+
+export async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const product = await productModel.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, product });
+  } catch (err) {
+    console.error("DeleteProduct error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to delete product." });
+  }
+}

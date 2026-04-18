@@ -22,6 +22,10 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+button, label, input[type="button"], input[type="submit"], input[type="reset"] {
+  cursor: pointer;
+}
+
 @keyframes drop-bounce {
   0% { transform: translateY(-100px); opacity: 0; }
   60% { transform: translateY(0); opacity: 1; }
