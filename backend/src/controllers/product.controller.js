@@ -3,21 +3,46 @@ import { uploadFile } from "../services/storage.service.js";
 
 export async function createProduct(req, res) {
   try {
-    const { title, description, priceAmount, priceCurrency } = req.body;
+    const { title, description, priceAmount, priceCurrency, variants: variantsRaw } = req.body;
 
     if (!title || !description || !priceAmount || !priceCurrency) {
       return res
         .status(400)
-        .json({ success: false, message: "All fields are required" });
+        .json({ success: false, message: "All basic fields are required" });
     }
 
-    const images = await Promise.all(
-      req.files.map(async (file) => {
-        const uploadResult = await uploadFile({
-          buffer: file.buffer,
-          fileName: file.originalname,
-        });
-        return { url: uploadResult.url };
+    const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
+
+    // Helper to upload files
+    const uploadImages = async (fieldname) => {
+      const files = req.files.filter((f) => f.fieldname === fieldname);
+      return Promise.all(
+        files.map(async (file) => {
+          const uploadResult = await uploadFile({
+            buffer: file.buffer,
+            fileName: file.originalname,
+          });
+          return { url: uploadResult.url };
+        }),
+      );
+    };
+
+    // Upload main images
+    const images = await uploadImages("images");
+
+    // Upload variant images and process variants
+    const processedVariants = await Promise.all(
+      variants.map(async (variant, index) => {
+        const variantImages = await uploadImages(`variant_${index}_images`);
+        return {
+          images: variantImages,
+          stock: variant.stock || 0,
+          attributes: variant.attributes || {},
+          price: {
+            amount: variant.priceAmount,
+            currency: variant.priceCurrency || priceCurrency,
+          },
+        };
       }),
     );
 
@@ -29,6 +54,7 @@ export async function createProduct(req, res) {
         currency: priceCurrency,
       },
       images,
+      variants: processedVariants,
       Seller: req.user._id,
     });
 

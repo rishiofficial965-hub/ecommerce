@@ -5,6 +5,19 @@ export const createProductValidator = [
   body("description").notEmpty().withMessage("Description is required"),
   body("priceAmount").notEmpty().withMessage("Price amount is required"),
   body("priceCurrency").notEmpty().withMessage("Price currency is required"),
+  body("variants")
+    .optional()
+    .custom((value) => {
+      try {
+        if (!value) return true;
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed))
+          throw new Error("Variants must be an array");
+        return true;
+      } catch (e) {
+        throw new Error("Invalid variants format");
+      }
+    }),
   validateRequest,
 ];
 

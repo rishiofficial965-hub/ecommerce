@@ -21,7 +21,7 @@ const router = Router();
 router.post(
   "/create",
   authenticateSeller,
-  upload.array("images", 7),
+  upload.any(),
   createProductValidator,
   createProduct,
 );

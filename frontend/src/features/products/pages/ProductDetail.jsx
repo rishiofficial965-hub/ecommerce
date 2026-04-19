@@ -23,13 +23,21 @@ const ProductDetail = () => {
   const loading = useSelector((state) => state.product.loading);
 
   const [product, setProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   async function getProductDetails() {
     const res = await handleGetProductDetails(productId);
     setProduct(res);
   }
+
+  // Derived states for dynamic updates
+  const displayImages = (selectedVariant?.images && selectedVariant.images.length > 0)
+    ? selectedVariant.images 
+    : (product?.images || []);
+    
+  const displayPrice = selectedVariant?.price || product?.price;
+  const displayStock = selectedVariant ? selectedVariant.stock : (product?.stock || 0);
 
   useEffect(() => {
     getProductDetails();
@@ -93,7 +101,7 @@ const ProductDetail = () => {
                 className="w-full h-full"
                 onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
               >
-                {product.images?.map((image, index) => (
+                {displayImages.map((image, index) => (
                   <SwiperSlide key={index}>
                     <img
                       src={image.url}
@@ -115,7 +123,7 @@ const ProductDetail = () => {
 
             {/* Thumbnail Gallery (Desktop) */}
             <div className="hidden md:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {product.images?.map((image, index) => (
+              {displayImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveImageIndex(index)}
@@ -136,22 +144,27 @@ const ProductDetail = () => {
                 <span className="px-2 py-0.5 bg-playing-hooky/10 text-playing-hooky text-[9px] font-black tracking-widest uppercase rounded-full border border-playing-hooky/20">
                   {product.category || "Premium Edit"}
                 </span>
-                {product.stock <= 5 && product.stock > 0 && (
+                {displayStock <= 5 && displayStock > 0 && (
                   <span className="text-[9px] font-black text-red-500 uppercase tracking-widest italic">
-                    Only {product.stock} left!
+                    Only {displayStock} left!
+                  </span>
+                )}
+                {displayStock === 0 && (
+                  <span className="text-[9px] font-black text-red-600 uppercase tracking-widest italic">
+                    Out of Stock!
                   </span>
                 )}
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-lacquered-licorice tracking-tighter uppercase leading-tight">
                 {product.title}
               </h1>
-              {product.price && (
+              {displayPrice && (
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-black text-copper-green">
-                    {product.price?.currency} {product.price.amount?.toLocaleString()}
+                    {displayPrice.currency} {displayPrice.amount?.toLocaleString()}
                   </span>
                   <span className="text-xs font-bold text-lacquered-licorice/30 line-through">
-                    {product.price?.currency} {(product.price.amount * 1.25).toFixed(0)}
+                    {displayPrice.currency} {(displayPrice.amount * 1.25).toFixed(0)}
                   </span>
                 </div>
               )}
@@ -163,28 +176,72 @@ const ProductDetail = () => {
               </p>
             </div>
 
-            {/* Size Selection Placeholder (if applicable) */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Select Size</h3>
-                <button className="text-[9px] font-black border-b border-lacquered-licorice tracking-widest uppercase opacity-40 hover:opacity-100 transition-opacity">Size Guide</button>
+            {/* Variant Selection */}
+            {product.variants?.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Select Variant</h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {product.variants.map((variant, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedVariant(variant)}
+                      className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all duration-300 border-2 ${
+                        selectedVariant === variant
+                          ? "bg-lacquered-licorice text-albescent-white border-lacquered-licorice shadow-xl scale-[1.01]"
+                          : "bg-white text-lacquered-licorice border-lacquered-licorice/5 hover:border-copper-green hover:shadow-md"
+                      }`}
+                    >
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(variant.attributes || {}).map(([key, value]) => (
+                            <span key={key} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                              selectedVariant === variant ? "bg-white/20" : "bg-lacquered-licorice/5"
+                            }`}>
+                              {key}: {value}
+                            </span>
+                          ))}
+                        </div>
+                        {variant.stock <= 5 && variant.stock > 0 && (
+                          <span className={`${selectedVariant === variant ? "text-red-300" : "text-red-500"} text-[8px] font-black uppercase tracking-widest`}>
+                            Low Stock: {variant.stock} left
+                          </span>
+                        )}
+                        {variant.stock === 0 && (
+                          <span className="text-red-600 text-[8px] font-black uppercase tracking-widest">Out of Stock</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-black">
+                          {variant.price.currency} {variant.price.amount.toLocaleString()}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {["S", "M", "L", "XL", "XXL"].map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black transition-all duration-300 border-2 ${
-                      selectedSize === size
-                        ? "bg-lacquered-licorice text-albescent-white border-lacquered-licorice"
-                        : "bg-transparent text-lacquered-licorice/40 border-lacquered-licorice/10 hover:border-lacquered-licorice/40"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            )}
+
+            {/* Hidden fallback if no variants */}
+            {(!product.variants || product.variants.length === 0) && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Size</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {["S", "M", "L", "XL"].map((size) => (
+                    <button
+                      key={size}
+                      className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black bg-transparent text-lacquered-licorice/40 border-2 border-lacquered-licorice/10 cursor-not-allowed opacity-50"
+                      disabled
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
