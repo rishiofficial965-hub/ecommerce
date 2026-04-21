@@ -80,20 +80,20 @@ const CartPage = () => {
           {/* Cart Items List */}
           <div className="lg:col-span-8 flex flex-col gap-8">
             <AnimatePresence mode="popLayout">
-              {cart.items.map((item) => (
+              {cart.items.filter((item) => item.product != null).map((item) => (
                 <motion.div
                   layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  key={`${item.product._id}-${item.variant}`}
+                  key={`${item.product?._id}-${item.variant}`}
                   className="group relative grid grid-cols-1 md:grid-cols-12 gap-8 p-6 bg-white rounded-[2.5rem] border border-lacquered-licorice/5 hover:shadow-2xl hover:shadow-lacquered-licorice/5 transition-all duration-500"
                 >
                   {/* Image Column */}
                   <div className="md:col-span-3 aspect-[3/4] bg-desert-khaki/10 rounded-3xl overflow-hidden border border-lacquered-licorice/5">
                     <img
                       src={item.image}
-                      alt={item.product.title}
+                      alt={item.product?.title || "Product"}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
                   </div>
@@ -104,14 +104,14 @@ const CartPage = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-copper-green mb-2 leading-none">
-                            {item.product.brand || "Snitch Originals"}
+                            {item.product?.brand || "Snitch Originals"}
                           </p>
                           <h3 className="text-2xl font-black tracking-tighter uppercase leading-none group-hover:text-copper-green transition-colors duration-300">
-                            {item.product.title}
+                            {item.product?.title || "Product"}
                           </h3>
                         </div>
                         <button
-                          onClick={() => handleRemoveFromCart({ productId: item.product._id, varientId: item.variant })}
+                          onClick={() => handleRemoveFromCart({ productId: item.product?._id, varientId: item.variant })}
                           className="w-10 h-10 rounded-2xl bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-300 transform active:scale-90"
                         >
                           <FaTrash size={14} />
@@ -119,12 +119,12 @@ const CartPage = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        {item.product.brand && (
+                        {item.product?.brand && (
                           <span className="px-3 py-1 bg-lacquered-licorice/5 rounded-full text-[9px] font-black uppercase tracking-widest border border-lacquered-licorice/5">
                             {item.product.brand}
                           </span>
                         )}
-                        {item.product.category && (
+                        {item.product?.category && (
                           <span className="px-3 py-1 bg-lacquered-licorice/5 rounded-full text-[9px] font-black uppercase tracking-widest border border-lacquered-licorice/5">
                             {item.product.category}
                           </span>
@@ -143,7 +143,7 @@ const CartPage = () => {
                         <div className="flex items-center gap-6 bg-albescent-white rounded-2xl p-1.5 border border-lacquered-licorice/5 w-fit shadow-inner">
                           <button
                             disabled={loading}
-                            onClick={() => item.quantity > 0 && handleUpdateQuantity({ productId: item.product._id, varientId: item.variant, quantity: item.quantity - 1 })}
+                            onClick={() => item.quantity > 0 && handleUpdateQuantity({ productId: item.product?._id, varientId: item.variant, quantity: item.quantity - 1 })}
                             className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <FaMinus size={10} />
@@ -153,7 +153,7 @@ const CartPage = () => {
                           </span>
                           <button
                             disabled={loading}
-                            onClick={() => handleUpdateQuantity({ productId: item.product._id, varientId: item.variant, quantity: item.quantity + 1 })}
+                            onClick={() => handleUpdateQuantity({ productId: item.product?._id, varientId: item.variant, quantity: item.quantity + 1 })}
                             className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <FaPlus size={10} />

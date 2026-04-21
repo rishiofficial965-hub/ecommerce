@@ -21,7 +21,6 @@ const ANNOUNCEMENTS = [
   "✨  Use code SNITCH10 for 10% off your first order",
 ];
 
-const CATEGORIES = ["All", "T-Shirts", "Hoodies", "Joggers", "Outerwear", "Accessories"];
 
 const Nav = () => {
   const navigate = useNavigate();

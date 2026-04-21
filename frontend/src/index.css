@@ -1,78 +1,101 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* ─── Design Tokens ──────────────────────────────────────────────────────── */
 @theme {
-  --color-copper-green: #3F4E3C;
-  --color-albescent-white: #E6E3D8;
-  --color-playing-hooky: #8C937C;
-  --color-desert-khaki: #D9D0C1;
-  --color-lacquered-licorice: #383838;
+  /* Primary — Deep Forest Green */
+  --color-copper-green: #2C3E29;
+  /* Accent — Warm Caramel Gold */
+  --color-playing-hooky: #C8A96E;
+  /* Surface — Warm Off-White */
+  --color-albescent-white: #F4F1EB;
+  /* Background — Soft Cream */
+  --color-desert-khaki: #EDE9E0;
+  /* Text — Rich Charcoal */
+  --color-lacquered-licorice: #1C1C1C;
 }
 
 :root {
-  --c-copper-green: #3F4E3C;
-  --c-albescent-white: #E6E3D8;
-  --c-playing-hooky: #8C937C;
-  --c-desert-khaki: #D9D0C1;
-  --c-lacquered-licorice: #383838;
+  --c-copper-green:      #2C3E29;
+  --c-playing-hooky:     #C8A96E;
+  --c-albescent-white:   #F4F1EB;
+  --c-desert-khaki:      #EDE9E0;
+  --c-lacquered-licorice: #1C1C1C;
 }
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 body {
   background-color: var(--c-desert-khaki);
   color: var(--c-lacquered-licorice);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   scroll-behavior: smooth;
-}
-
-/* Custom scale utility not in Tailwind defaults */
-.group:hover .group-hover\:scale-108 {
-  transform: scale(1.08);
 }
 
 button, label, input[type="button"], input[type="submit"], input[type="reset"] {
   cursor: pointer;
 }
 
-@keyframes drop-bounce {
-  0% { transform: translateY(-100px); opacity: 0; }
-  60% { transform: translateY(0); opacity: 1; }
-  80% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
+/* ─── Custom Utilities ───────────────────────────────────────────────────── */
+/* Scale-108 — used by product card hover zoom */
+.group:hover .group-hover\:scale-108 {
+  transform: scale(1.08);
 }
 
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes drop-bounce {
+  0%   { transform: translateY(-80px); opacity: 0; }
+  60%  { transform: translateY(0);     opacity: 1; }
+  80%  { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
 .animate-drop-bounce {
-  animation: drop-bounce 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: drop-bounce 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes soft-rotate {
   from { transform: rotate(45deg); }
-  to { transform: rotate(405deg); }
+  to   { transform: rotate(405deg); }
 }
-
 .animate-soft-rotate {
   animation: soft-rotate 8s linear infinite;
 }
 
-/* Custom Scrollbar Hide */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+@keyframes ticker-up {
+  0%   { transform: translateY(100%); opacity: 0; }
+  15%  { transform: translateY(0);    opacity: 1; }
+  85%  { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(-100%); opacity: 0; }
 }
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.animate-ticker-up {
+  animation: ticker-up 3.5s ease-in-out infinite;
 }
 
-/* Swiper Customizations */
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Thin branded scrollbar for modals / panels */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-copper-green) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar       { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--c-copper-green); border-radius: 9999px; }
+
+/* ─── Swiper Overrides ───────────────────────────────────────────────────── */
 .swiper-pagination-bullet {
   background: var(--c-copper-green) !important;
-  opacity: 0.3;
+  opacity: 0.25;
 }
-
 .swiper-pagination-bullet-active {
   opacity: 1;
   width: 20px !important;
   border-radius: 4px !important;
+  background: var(--c-playing-hooky) !important;
 }
-
-.swiper-pagination {
-  bottom: 2rem !important;
-}
+.swiper-pagination { bottom: 2rem !important; }
