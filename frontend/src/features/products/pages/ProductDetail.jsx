@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useProduct } from "../hooks/useProduct";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { useCart } from "../../cart/hook/useCart";
 import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
 import {
@@ -29,11 +30,35 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { productId } = useParams();
   const { handleGetProductDetails } = useProduct();
+  const { handleAddToCart } = useCart();
   const loading = useSelector((state) => state.product.loading);
+  const { user } = useSelector((state) => state.auth);
 
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const handleAddToBag = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (!selectedVariant && product?.variants?.length > 0) {
+      alert("Please select a variant (size/color) first!");
+      return;
+    }
+
+    const res = await handleAddToCart({
+      productId: product._id,
+      varientId: selectedVariant?._id || product.variants[0]._id, // Fallback if no variants but somehow reachable
+      quantity: 1,
+    });
+
+    if (res.success) {
+      navigate("/cart");
+    }
+  };
 
   async function getProductDetails() {
     const res = await handleGetProductDetails(productId);
@@ -106,6 +131,7 @@ const ProductDetail = () => {
               <Swiper
                 modules={[Navigation, Pagination, Autoplay, EffectFade]}
                 effect="fade"
+                fadeEffect={{ crossFade: true }}
                 navigation={{
                   prevEl: ".swiper-prev",
                   nextEl: ".swiper-next",
@@ -162,9 +188,17 @@ const ProductDetail = () => {
           {/* Right: Product Details */}
           <div className="flex flex-col space-y-6">
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                {product.brand && (
+                  <span className="px-2 py-0.5 bg-copper-green/10 text-copper-green text-[9px] font-black tracking-widest uppercase rounded-full border border-copper-green/20">
+                    {product.brand}
+                  </span>
+                )}
                 <span className="px-2 py-0.5 bg-playing-hooky/10 text-playing-hooky text-[9px] font-black tracking-widest uppercase rounded-full border border-playing-hooky/20">
                   {product.category || "Premium Edit"}
+                </span>
+                <span className="px-2 py-0.5 bg-lacquered-licorice/10 text-lacquered-licorice/60 text-[9px] font-black tracking-widest uppercase rounded-full border border-lacquered-licorice/20">
+                  {product.gender || "Unisex"}
                 </span>
                 {displayStock <= 5 && displayStock > 0 && (
                   <span className="text-[9px] font-black text-red-500 uppercase tracking-widest italic">
@@ -180,6 +214,11 @@ const ProductDetail = () => {
               <h1 className="text-3xl md:text-4xl font-black text-lacquered-licorice tracking-tighter uppercase leading-tight">
                 {product.title}
               </h1>
+              {product.Seller && (
+                <p className="text-[10px] font-bold text-lacquered-licorice/40 uppercase tracking-widest">
+                  Sold by: <span className="text-copper-green">{product.Seller.fullname}</span>
+                </p>
+              )}
               {displayPrice && (
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-black text-copper-green">
@@ -207,56 +246,67 @@ const ProductDetail = () => {
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">
                     Select Variant
                   </h3>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {product.variants.map((variant, index) => (
+                  {selectedVariant && (
                     <button
-                      key={index}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all duration-300 border-2 ${
-                        selectedVariant === variant
-                          ? "bg-lacquered-licorice text-albescent-white border-lacquered-licorice shadow-xl scale-[1.01]"
-                          : "bg-white text-lacquered-licorice border-lacquered-licorice/5 hover:border-copper-green hover:shadow-md"
-                      }`}
+                      onClick={() => setSelectedVariant(null)}
+                      className="text-[9px] font-black uppercase tracking-widest text-copper-green hover:text-lacquered-licorice transition-colors underline underline-offset-4"
                     >
-                      <div className="flex flex-col items-start gap-1">
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(variant.attributes || {}).map(
-                            ([key, value]) => (
-                              <span
-                                key={key}
-                                className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                                  selectedVariant === variant
-                                    ? "bg-white/20"
-                                    : "bg-lacquered-licorice/5"
-                                }`}
-                              >
-                                {key}: {value}
-                              </span>
-                            ),
+                      Clear Selection
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {product.variants.map((variant, index) => {
+                    const isSelected = selectedVariant === variant;
+                    const attributesText = Object.values(variant.attributes || {}).join(" / ");
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedVariant(isSelected ? null : variant)}
+                        className={`group relative px-4 py-3 rounded-xl border-2 transition-all duration-300 ${
+                          isSelected
+                            ? "bg-lacquered-licorice text-albescent-white border-lacquered-licorice shadow-lg scale-105"
+                            : "bg-white text-lacquered-licorice border-lacquered-licorice/5 hover:border-copper-green/40 hover:shadow-sm"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? "text-albescent-white" : "text-lacquered-licorice"}`}>
+                            {attributesText}
+                          </span>
+                          {!isSelected && (
+                            <span className="text-[8px] font-bold text-lacquered-licorice/30 uppercase">
+                              {variant.price.currency} {variant.price.amount}
+                            </span>
                           )}
                         </div>
-                        {variant.stock <= 5 && variant.stock > 0 && (
-                          <span
-                            className={`${selectedVariant === variant ? "text-red-300" : "text-red-500"} text-[8px] font-black uppercase tracking-widest`}
-                          >
-                            Low Stock: {variant.stock} left
-                          </span>
+                        
+                        {/* Stock status indicator */}
+                        {variant.stock <= 5 && (
+                          <div className={`absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full border-2 border-white ${variant.stock === 0 ? "bg-red-600" : "bg-orange-500"} shadow-sm`} title={variant.stock === 0 ? "Out of stock" : `Only ${variant.stock} left`} />
                         )}
-                        {variant.stock === 0 && (
-                          <span className="text-red-600 text-[8px] font-black uppercase tracking-widest">
-                            Out of Stock
-                          </span>
-                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Specifications Section */}
+            {(selectedVariant?.attributes || (product.variants?.length > 0 && product.variants[0].attributes)) && (
+              <div className="space-y-4 pt-4 border-t border-lacquered-licorice/5">
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">
+                  Technical Specifications
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                  {Object.entries(selectedVariant?.attributes || (product.variants?.length > 0 ? product.variants[0].attributes : {})).map(
+                    ([key, value]) => (
+                      <div key={key} className="flex justify-between items-center py-2 border-b border-lacquered-licorice/5">
+                        <span className="text-[10px] font-bold text-lacquered-licorice/40 uppercase tracking-wider">{key}</span>
+                        <span className="text-[10px] font-black text-lacquered-licorice uppercase tracking-wider">{value}</span>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-sm font-black">
-                          {variant.price.currency}{" "}
-                          {variant.price.amount.toLocaleString()}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
             )}
@@ -285,7 +335,10 @@ const ProductDetail = () => {
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button className="flex-1 group bg-copper-green text-albescent-white py-3.5 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95">
+              <button
+                onClick={handleAddToBag}
+                className="flex-1 group bg-copper-green text-albescent-white py-3.5 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95"
+              >
                 <FaShoppingCart
                   size={14}
                   className="group-hover:scale-110 transition-transform"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useProduct } from "../hooks/useProduct";
+import { useCart } from "../../cart/hook/useCart";
 import Nav from "../components/Nav";
 import { FaShoppingCart, FaRegHeart, FaArrowRight, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +14,32 @@ const Home = () => {
   const user = useSelector((state) => state.auth.user);
   const loading = useSelector((state) => state.auth.loading);
   const { handleGetAllProducts } = useProduct();
+  const { handleAddToCart } = useCart();
   const navigate = useNavigate();
+
+  const handleQuickAdd = async (e, product) => {
+    e.stopPropagation(); // Prevent navigating to details
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    const firstVariantId = product.variants?.[0]?._id;
+    if (!firstVariantId) {
+      alert("This product is currently unavailable.");
+      return;
+    }
+
+    const res = await handleAddToCart({
+      productId: product._id,
+      varientId: firstVariantId,
+      quantity: 1,
+    });
+
+    if (res.success) {
+      alert(`${product.title} added to bag!`);
+    }
+  };
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -149,14 +175,20 @@ const Home = () => {
                     <button className="w-8 h-8 bg-albescent-white rounded-full flex items-center justify-center text-lacquered-licorice hover:bg-copper-green hover:text-albescent-white transition-colors shadow-lg">
                       <FaRegHeart size={12} />
                     </button>
-                    <button className="w-8 h-8 bg-albescent-white rounded-full flex items-center justify-center text-lacquered-licorice hover:bg-copper-green hover:text-albescent-white transition-colors shadow-lg">
+                    <button 
+                      onClick={(e) => handleQuickAdd(e, product)}
+                      className="w-8 h-8 bg-albescent-white rounded-full flex items-center justify-center text-lacquered-licorice hover:bg-copper-green hover:text-albescent-white transition-colors shadow-lg"
+                    >
                       <FaShoppingCart size={12} />
                     </button>
                   </div>
-
+ 
                   {/* Quick Add Button */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-20">
-                    <button className="w-full bg-lacquered-licorice text-albescent-white py-2 rounded-xl font-black text-[10px] tracking-widest hover:bg-copper-green transition-colors">
+                    <button 
+                      onClick={(e) => handleQuickAdd(e, product)}
+                      className="w-full bg-lacquered-licorice text-albescent-white py-2 rounded-xl font-black text-[10px] tracking-widest hover:bg-copper-green transition-colors"
+                    >
                       QUICK ADD
                     </button>
                   </div>

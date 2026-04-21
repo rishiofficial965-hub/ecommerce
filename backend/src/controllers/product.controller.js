@@ -18,7 +18,17 @@ const uploadImages = async (req, fieldname) => {
 
 export async function createProduct(req, res) {
   try {
-    const { title, description, priceAmount, priceCurrency, variants: variantsRaw } = req.body;
+    const {
+      title,
+      description,
+      priceAmount,
+      priceCurrency,
+      category,
+      brand,
+      gender,
+      stock,
+      variants: variantsRaw,
+    } = req.body;
 
     if (!title || !description || !priceAmount || !priceCurrency) {
       return res
@@ -55,6 +65,10 @@ export async function createProduct(req, res) {
         currency: priceCurrency,
       },
       images,
+      category,
+      brand,
+      gender,
+      stock,
       variants: processedVariants,
       Seller: req.user._id,
     });
@@ -96,7 +110,7 @@ export async function getSellerProducts(req, res) {
 
 export async function getAllProducts(req, res) {
   try {
-    const products = await productModel.find();
+    const products = await productModel.find().populate("Seller", "fullname email contact");
     return res.status(200).json({ success: true, products });
   } catch (err) {
     console.error("GetAllProducts error:", err);
@@ -109,7 +123,7 @@ export async function getAllProducts(req, res) {
 export async function getProductDetails(req, res) {
   try {
     const { id } = req.params;
-    const product = await productModel.findById(id);
+    const product = await productModel.findById(id).populate("Seller", "fullname email contact");
     return res.status(200).json({ success: true, product });
   } catch (err) {
     console.error("GetProductDetails error:", err);
@@ -140,6 +154,10 @@ export async function updateProduct(req, res) {
       description,
       priceAmount,
       priceCurrency,
+      category,
+      brand,
+      gender,
+      stock,
       variants: variantsRaw,
     } = req.body;
 
@@ -155,6 +173,10 @@ export async function updateProduct(req, res) {
     if (description !== undefined) product.description = description;
     if (priceAmount !== undefined) product.price.amount = priceAmount;
     if (priceCurrency !== undefined) product.price.currency = priceCurrency;
+    if (category !== undefined) product.category = category;
+    if (brand !== undefined) product.brand = brand;
+    if (gender !== undefined) product.gender = gender;
+    if (stock !== undefined) product.stock = stock;
 
     const hasFiles = req.files && req.files.length > 0;
 

@@ -9,12 +9,21 @@ import Protected from "../features/products/components/Protected.jsx";
 import Home from "../features/products/pages/Home.jsx";
 import ProductDetail from "../features/products/pages/ProductDetail.jsx";
 import SellerProductDetails from "../features/products/pages/SellerProductDetails.jsx";
+import CartPage from "../features/cart/pages/CartPage.jsx";
 
 
 export const routes = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
+  },
+  {
+    path: "/cart",
+    element: (
+      <Protected role="buyer">
+        <CartPage />
+      </Protected>
+    ),
   },
   {
     path: "/login",
@@ -42,7 +51,7 @@ export const routes = createBrowserRouter([
       {
         path: "create-product",
         element: (
-          <Protected>
+          <Protected role="seller">
             <CreateProduct />
           </Protected>
         ),
@@ -50,7 +59,7 @@ export const routes = createBrowserRouter([
       {
         path: "dashboard",
         element: (
-          <Protected>
+          <Protected role="seller">
             <Dashboard />
           </Protected>
         ),
@@ -58,7 +67,7 @@ export const routes = createBrowserRouter([
       {
         path: "product/:productId",
         element: (
-          <Protected>
+          <Protected role="seller">
             <SellerProductDetails />
           </Protected>
         ),

@@ -7,11 +7,13 @@ import {
   FaTachometerAlt,
   FaUserPlus,
   FaSignInAlt,
+  FaShoppingCart,
 } from "react-icons/fa";
 
 const Nav = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
+  const cartItemsCount = useSelector((state) => state.cart.cart?.totalItems || 0);
   const { handleLogout: logoutUser } = useAuth();
 
   const handleLogout = async () => {
@@ -71,6 +73,20 @@ const Nav = () => {
               </Link>
             </>
           ) : null}
+          
+          {user && user.role === "buyer" && (
+            <Link
+              to="/cart"
+              className="relative p-3 rounded-xl bg-lacquered-licorice/5 text-lacquered-licorice/60 hover:bg-copper-green hover:text-albescent-white transition-all duration-300"
+            >
+              <FaShoppingCart size={18} />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-lacquered-licorice text-albescent-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-albescent-white">
+                  {cartItemsCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           {user && (
             <>

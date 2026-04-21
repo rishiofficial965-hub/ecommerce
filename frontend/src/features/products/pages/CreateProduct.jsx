@@ -13,6 +13,9 @@ const CreateProduct = () => {
     description: "",
     priceAmount: "",
     priceCurrency: "INR",
+    category: "",
+    brand: "",
+    gender: "Unisex",
   });
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -135,6 +138,9 @@ const CreateProduct = () => {
     data.append("description", formData.description);
     data.append("priceAmount", formData.priceAmount);
     data.append("priceCurrency", formData.priceCurrency);
+    data.append("category", formData.category);
+    data.append("brand", formData.brand);
+    data.append("gender", formData.gender);
 
     images.forEach((image) => {
       data.append("images", image);
@@ -172,6 +178,9 @@ const CreateProduct = () => {
         description: "",
         priceAmount: "",
         priceCurrency: "INR",
+        category: "",
+        brand: "",
+        gender: "Unisex",
       });
       setImages([]);
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
@@ -257,6 +266,66 @@ const CreateProduct = () => {
                   rows="3"
                   className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all resize-none"
                   required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
+                    Brand
+                  </label>
+                  <input
+                    type="text"
+                    name="brand"
+                    value={formData.brand}
+                    onChange={handleChange}
+                    placeholder="e.g. Snitch"
+                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    placeholder="e.g. Shirts"
+                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all cursor-pointer"
+                >
+                  <option value="Men">Men</option>
+                  <option value="Women">Women</option>
+                  <option value="Unisex">Unisex</option>
+                  <option value="Kids">Kids</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
+                  Available Stock
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  placeholder="e.g. 100"
+                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
                 />
               </div>
 
