@@ -1,12 +1,30 @@
-import { stockOfVarient } from "../dao/product.dao.js";
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
 
+// ─── Shared helper ────────────────────────────────────────────────────────────
+/**
+ * Build the summary fields (totalAmount, totalItems) from a populated cart
+ * and return the enriched cart object safe for the response.
+ */
+function buildCartResponse(populatedCart) {
+  const totalAmount = populatedCart.items.reduce(
+    (total, item) => total + item.price.amount * item.quantity,
+    0,
+  );
+  const totalItems = populatedCart.items.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
+  return { ...populatedCart.toObject(), totalAmount, totalItems };
+}
+
+// ─── Add to Cart ──────────────────────────────────────────────────────────────
 export const addToCart = async (req, res) => {
   try {
     const { productId, varientId } = req.params;
-    const quantity = req.body.quantity || 1;
+    const quantity = Number(req.body.quantity) || 1;
 
+    // Fetch product + confirm the variant belongs to it
     const product = await productModel.findOne({
       _id: productId,
       "variants._id": varientId,
@@ -22,6 +40,7 @@ export const addToCart = async (req, res) => {
       (v) => v._id.toString() === varientId,
     );
 
+    // Should never be falsy after the query above, but guard anyway
     if (!selectedVariant) {
       return res
         .status(404)
@@ -34,8 +53,8 @@ export const addToCart = async (req, res) => {
         .json({ error: "Insufficient stock", success: false });
     }
 
+    // Upsert cart
     let cart = await cartModel.findOne({ user: req.user._id });
-
     if (!cart) {
       cart = await cartModel.create({ user: req.user._id, items: [] });
     }
@@ -48,49 +67,45 @@ export const addToCart = async (req, res) => {
 
     if (existingItem) {
       if (selectedVariant.stock < existingItem.quantity + quantity) {
-        return res
-          .status(400)
-          .json({ error: "Total quantity exceeds available stock", success: false });
+        return res.status(400).json({
+          error: "Total quantity exceeds available stock",
+          success: false,
+        });
       }
       existingItem.quantity += quantity;
     } else {
+      // BUG FIX: fallback to "" to satisfy the `required: true` image field in cart model
+      const image =
+        selectedVariant.images?.[0]?.url ||
+        product.images?.[0]?.url ||
+        "";
+
       cart.items.push({
         product: productId,
         variant: varientId,
         quantity,
         price: selectedVariant.price,
-        image: selectedVariant.images[0]?.url || product.images[0]?.url,
+        image,
       });
     }
 
     await cart.save();
+
     const populatedCart = await cartModel
       .findById(cart._id)
       .populate("items.product");
 
-    const totalAmount = populatedCart.items.reduce(
-      (total, item) => total + item.price.amount * item.quantity,
-      0,
-    );
-
-    const totalItems = populatedCart.items.reduce(
-      (total, item) => total + item.quantity,
-      0,
-    );
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      cart: {
-        ...populatedCart.toObject(),
-        totalAmount,
-        totalItems,
-      },
+      cart: buildCartResponse(populatedCart),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, success: false });
+    console.error("AddToCart error:", error);
+    return res.status(500).json({ error: error.message, success: false });
   }
 };
 
+// ─── Get Cart ─────────────────────────────────────────────────────────────────
 export const getCart = async (req, res) => {
   try {
     const cart = await cartModel
@@ -104,43 +119,36 @@ export const getCart = async (req, res) => {
       });
     }
 
-    const totalAmount = cart.items.reduce(
-      (total, item) => total + item.price.amount * item.quantity,
-      0,
-    );
-
-    const totalItems = cart.items.reduce(
-      (total, item) => total + item.quantity,
-      0,
-    );
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      cart: {
-        ...cart.toObject(),
-        totalAmount,
-        totalItems,
-      },
+      cart: buildCartResponse(cart),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, success: false });
+    console.error("GetCart error:", error);
+    return res.status(500).json({ error: error.message, success: false });
   }
 };
 
+// ─── Update Quantity ──────────────────────────────────────────────────────────
 export const updateQuantity = async (req, res) => {
   try {
     const { productId, varientId } = req.params;
-    const { quantity } = req.body;
+    const quantity = Number(req.body.quantity);
+
+    if (isNaN(quantity)) {
+      return res
+        .status(400)
+        .json({ error: "quantity must be a number", success: false });
+    }
 
     const cart = await cartModel.findOne({ user: req.user._id });
     if (!cart) {
-      return res.status(404).json({
-        error: "Cart not found",
-        success: false,
-      });
+      return res
+        .status(404)
+        .json({ error: "Cart not found", success: false });
     }
 
-    // Handle item removal if quantity is 0 or less
+    // quantity ≤ 0 → treat as remove
     if (quantity <= 0) {
       cart.items = cart.items.filter(
         (item) =>
@@ -157,21 +165,24 @@ export const updateQuantity = async (req, res) => {
       );
 
       if (!item) {
-        return res.status(404).json({
-          error: "Item not found in cart",
-          success: false,
-        });
+        return res
+          .status(404)
+          .json({ error: "Item not found in cart", success: false });
       }
 
-      // Check stock
+      // BUG FIX: productModel.findById can return null — guard before accessing .variants
       const product = await productModel.findById(productId);
-      const variant = product.variants.id(varientId);
+      if (!product) {
+        return res
+          .status(404)
+          .json({ error: "Product not found", success: false });
+      }
 
+      const variant = product.variants.id(varientId);
       if (!variant) {
-        return res.status(404).json({
-          error: "Product variant not found",
-          success: false,
-        });
+        return res
+          .status(404)
+          .json({ error: "Product variant not found", success: false });
       }
 
       if (variant.stock < quantity) {
@@ -190,41 +201,29 @@ export const updateQuantity = async (req, res) => {
       .findById(cart._id)
       .populate("items.product");
 
-    const totalAmount = populatedCart.items.reduce(
-      (total, item) => total + item.price.amount * item.quantity,
-      0,
-    );
-
-    const totalItems = populatedCart.items.reduce(
-      (total, item) => total + item.quantity,
-      0,
-    );
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      cart: {
-        ...populatedCart.toObject(),
-        totalAmount,
-        totalItems,
-      },
+      cart: buildCartResponse(populatedCart),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, success: false });
+    console.error("UpdateQuantity error:", error);
+    return res.status(500).json({ error: error.message, success: false });
   }
 };
 
+// ─── Remove From Cart ─────────────────────────────────────────────────────────
 export const removeFromCart = async (req, res) => {
   try {
     const { productId, varientId } = req.params;
 
     const cart = await cartModel.findOne({ user: req.user._id });
     if (!cart) {
-      return res.status(404).json({
-        error: "Cart not found",
-        success: false,
-      });
+      return res
+        .status(404)
+        .json({ error: "Cart not found", success: false });
     }
 
+    const prevLength = cart.items.length;
     cart.items = cart.items.filter(
       (item) =>
         !(
@@ -233,31 +232,25 @@ export const removeFromCart = async (req, res) => {
         ),
     );
 
+    // BUG FIX: if nothing was removed, the item was not in the cart
+    if (cart.items.length === prevLength) {
+      return res
+        .status(404)
+        .json({ error: "Item not found in cart", success: false });
+    }
+
     await cart.save();
 
     const populatedCart = await cartModel
       .findById(cart._id)
       .populate("items.product");
 
-    const totalAmount = populatedCart.items.reduce(
-      (total, item) => total + item.price.amount * item.quantity,
-      0,
-    );
-
-    const totalItems = populatedCart.items.reduce(
-      (total, item) => total + item.quantity,
-      0,
-    );
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      cart: {
-        ...populatedCart.toObject(),
-        totalAmount,
-        totalItems,
-      },
+      cart: buildCartResponse(populatedCart),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, success: false });
+    console.error("RemoveFromCart error:", error);
+    return res.status(500).json({ error: error.message, success: false });
   }
 };

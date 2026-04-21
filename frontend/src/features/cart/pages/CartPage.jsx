@@ -85,7 +85,7 @@ const CartPage = () => {
                   className="group relative grid grid-cols-1 md:grid-cols-12 gap-8 p-6 bg-white rounded-[2.5rem] border border-lacquered-licorice/5 hover:shadow-2xl hover:shadow-lacquered-licorice/5 transition-all duration-500"
                 >
                   {/* Image Column */}
-                  <div className="md:col-span-3 aspect-[3/4] bg-desert-khaki/10 rounded-3xl overflow-hidden overflow-hidden border border-lacquered-licorice/5">
+                  <div className="md:col-span-3 aspect-[3/4] bg-desert-khaki/10 rounded-3xl overflow-hidden border border-lacquered-licorice/5">
                     <img
                       src={item.image}
                       alt={item.product.title}
@@ -130,8 +130,9 @@ const CartPage = () => {
                         </p>
                         <div className="flex items-center gap-6 bg-albescent-white rounded-2xl p-1.5 border border-lacquered-licorice/5 w-fit shadow-inner">
                           <button
+                            disabled={loading}
                             onClick={() => item.quantity > 0 && handleUpdateQuantity({ productId: item.product._id, varientId: item.variant, quantity: item.quantity - 1 })}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <FaMinus size={10} />
                           </button>
@@ -139,8 +140,9 @@ const CartPage = () => {
                             {item.quantity}
                           </span>
                           <button
+                            disabled={loading}
                             onClick={() => handleUpdateQuantity({ productId: item.product._id, varientId: item.variant, quantity: item.quantity + 1 })}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white hover:shadow-md text-lacquered-licorice/40 hover:text-lacquered-licorice transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <FaPlus size={10} />
                           </button>

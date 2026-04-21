@@ -19,8 +19,10 @@ export const useCart = () => {
       dispatch(setCart(data.cart));
       return { success: true, cart: data.cart };
     } catch (error) {
-      const msg = error.response?.data?.error || error.message;
+      // BUG FIX: was silently swallowing the error — now surfaces it via Redux
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
       dispatch(setCart(null));
+      dispatch(setError(msg));
       return { success: false, error: msg };
     } finally {
       dispatch(setLoading(false));
@@ -45,27 +47,33 @@ export const useCart = () => {
 
   const handleUpdateQuantity = async ({ productId, varientId, quantity }) => {
     try {
+      dispatch(setLoading(true));
       dispatch(setError(null));
       const data = await updateItemQuantity({ productId, varientId, quantity });
       dispatch(setCart(data.cart));
       return { success: true, cart: data.cart };
     } catch (error) {
-      const msg = error.response?.data?.error || error.message;
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
       dispatch(setError(msg));
       return { success: false, error: msg };
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
   const handleRemoveFromCart = async ({ productId, varientId }) => {
     try {
+      dispatch(setLoading(true));
       dispatch(setError(null));
       const data = await removeItemFromCart({ productId, varientId });
       dispatch(setCart(data.cart));
       return { success: true, cart: data.cart };
     } catch (error) {
-      const msg = error.response?.data?.error || error.message;
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
       dispatch(setError(msg));
       return { success: false, error: msg };
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 

@@ -1,7 +1,7 @@
 import productModel from "../model/product.model.js";
 import { uploadFile } from "../services/storage.service.js";
 
-// Helper to upload files
+// ─── Helper: upload files by field name ───────────────────────────────────────
 const uploadImages = async (req, fieldname) => {
   if (!req.files) return [];
   const files = req.files.filter((f) => f.fieldname === fieldname);
@@ -16,6 +16,7 @@ const uploadImages = async (req, fieldname) => {
   );
 };
 
+// ─── Create Product ───────────────────────────────────────────────────────────
 export async function createProduct(req, res) {
   try {
     const {
@@ -36,15 +37,26 @@ export async function createProduct(req, res) {
         .json({ success: false, message: "All basic fields are required" });
     }
 
-    const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
+    // BUG FIX: JSON.parse can throw — return 400 instead of letting 500 swallow it
+    let variants = [];
+    if (variantsRaw) {
+      try {
+        variants = JSON.parse(variantsRaw);
+      } catch {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid variants JSON" });
+      }
+    }
 
-    // Upload main images
     const images = await uploadImages(req, "images");
 
-    // Upload variant images and process variants
     const processedVariants = await Promise.all(
       variants.map(async (variant, index) => {
-        const variantImages = await uploadImages(req, `variant_${index}_images`);
+        const variantImages = await uploadImages(
+          req,
+          `variant_${index}_images`,
+        );
         return {
           images: variantImages,
           stock: variant.stock || 0,
@@ -60,10 +72,7 @@ export async function createProduct(req, res) {
     const product = await productModel.create({
       title,
       description,
-      price: {
-        amount: priceAmount,
-        currency: priceCurrency,
-      },
+      price: { amount: priceAmount, currency: priceCurrency },
       images,
       category,
       brand,
@@ -73,29 +82,21 @@ export async function createProduct(req, res) {
       Seller: req.user._id,
     });
 
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message: "Product created successfully",
-        product,
-      });
-  } catch (err) {
-    console.error("CreateProduct error details:", {
-      message: err.message,
-      stack: err.stack,
-      error: err,
+    return res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      product,
     });
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to create product. Please try again.",
-      });
+  } catch (err) {
+    console.error("CreateProduct error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create product. Please try again.",
+    });
   }
 }
 
-
+// ─── Get Seller Products ──────────────────────────────────────────────────────
 export async function getSellerProducts(req, res) {
   try {
     const products = await productModel.find({ Seller: req.user._id });
@@ -108,9 +109,12 @@ export async function getSellerProducts(req, res) {
   }
 }
 
+// ─── Get All Products ─────────────────────────────────────────────────────────
 export async function getAllProducts(req, res) {
   try {
-    const products = await productModel.find().populate("Seller", "fullname email contact");
+    const products = await productModel
+      .find()
+      .populate("Seller", "fullname email contact");
     return res.status(200).json({ success: true, products });
   } catch (err) {
     console.error("GetAllProducts error:", err);
@@ -120,10 +124,21 @@ export async function getAllProducts(req, res) {
   }
 }
 
+// ─── Get Product Details ──────────────────────────────────────────────────────
 export async function getProductDetails(req, res) {
   try {
     const { id } = req.params;
-    const product = await productModel.findById(id).populate("Seller", "fullname email contact");
+    const product = await productModel
+      .findById(id)
+      .populate("Seller", "fullname email contact");
+
+    // BUG FIX: return 404 instead of 200 with null product
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
     return res.status(200).json({ success: true, product });
   } catch (err) {
     console.error("GetProductDetails error:", err);
@@ -133,11 +148,27 @@ export async function getProductDetails(req, res) {
   }
 }
 
+// ─── Delete Product ───────────────────────────────────────────────────────────
 export async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
-    const product = await productModel.findByIdAndDelete(id);
-    return res.status(200).json({ success: true, product });
+    const product = await productModel.findById(id);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    // BUG FIX: only the seller who created it can delete it
+    if (product.Seller.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorised to delete this product" });
+    }
+
+    await product.deleteOne();
+    return res.status(200).json({ success: true, message: "Product deleted" });
   } catch (err) {
     console.error("DeleteProduct error:", err);
     return res
@@ -146,6 +177,7 @@ export async function deleteProduct(req, res) {
   }
 }
 
+// ─── Update Product ───────────────────────────────────────────────────────────
 export async function updateProduct(req, res) {
   try {
     const { id } = req.params;
@@ -168,7 +200,14 @@ export async function updateProduct(req, res) {
         .json({ success: false, message: "Product not found" });
     }
 
-    // Update only sent fields
+    // BUG FIX: only the owner can update the product
+    if (product.Seller.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorised to update this product" });
+    }
+
+    // Update only supplied fields
     if (title !== undefined) product.title = title;
     if (description !== undefined) product.description = description;
     if (priceAmount !== undefined) product.price.amount = priceAmount;
@@ -180,7 +219,7 @@ export async function updateProduct(req, res) {
 
     const hasFiles = req.files && req.files.length > 0;
 
-    // Handle main images
+    // Merge existing main images with newly uploaded ones
     const existingMainImages = req.body.existingImages
       ? JSON.parse(req.body.existingImages)
       : product.images;
@@ -189,14 +228,21 @@ export async function updateProduct(req, res) {
 
     // Handle variants
     if (variantsRaw !== undefined) {
-      const variants = JSON.parse(variantsRaw);
+      let variants;
+      try {
+        variants = JSON.parse(variantsRaw);
+      } catch {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid variants JSON" });
+      }
+
       const processedVariants = await Promise.all(
         variants.map(async (variant, index) => {
           const variantImages = hasFiles
             ? await uploadImages(req, `variant_${index}_images`)
             : [];
           return {
-            // Merge existing variant images with newly uploaded ones
             images: [...(variant.images || []), ...variantImages],
             stock: variant.stock !== undefined ? variant.stock : 0,
             attributes: variant.attributes || {},
