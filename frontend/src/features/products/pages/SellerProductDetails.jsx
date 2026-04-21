@@ -3,18 +3,27 @@ import { useProduct } from "../hooks/useProduct";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import {
-  LuPackage,
-  LuImagePlus,
-  LuX,
-  LuPlus,
-  LuTrash2,
-  LuLayers,
-  LuSave,
-  LuArrowLeft,
+  LuImagePlus, LuX, LuPlus, LuTrash2, LuLayers, LuSave, LuArrowLeft, LuPackage,
 } from "react-icons/lu";
-import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
 import { useToast } from "../../common/Toast";
+
+// ── Shared input style ────────────────────────────────────────────────────────
+const input =
+  "w-full bg-white border border-lacquered-licorice/10 text-lacquered-licorice placeholder:text-lacquered-licorice/25 px-4 py-3 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-copper-green/30 focus:border-copper-green/40 focus:bg-white transition-all";
+
+const label = "block text-[10px] font-black uppercase tracking-widest text-lacquered-licorice/40 mb-2";
+
+// ── Section wrapper ───────────────────────────────────────────────────────────
+const Section = ({ title, children }) => (
+  <div className="space-y-5">
+    <div className="flex items-center gap-3">
+      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-lacquered-licorice/40">{title}</h3>
+      <div className="flex-1 h-px bg-lacquered-licorice/8" />
+    </div>
+    {children}
+  </div>
+);
 
 const SellerProductDetails = () => {
   const { productId } = useParams();
@@ -22,15 +31,11 @@ const SellerProductDetails = () => {
   const { handleGetProductDetails, handleUpdateProduct } = useProduct();
   const loading = useSelector((state) => state.product.loading);
   const toast = useToast();
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    priceAmount: "",
-    priceCurrency: "INR",
-    brand: "",
-    category: "",
-    gender: "Unisex",
+    title: "", description: "", priceAmount: "", priceCurrency: "INR",
+    brand: "", category: "", gender: "Unisex",
   });
 
   const [existingImages, setExistingImages] = useState([]);
@@ -42,37 +47,20 @@ const SellerProductDetails = () => {
     const res = await handleGetProductDetails(productId);
     if (res && !res.error) {
       setFormData({
-        title: res.title,
-        description: res.description,
-        priceAmount: res.price.amount,
-        priceCurrency: res.price.currency,
-        brand: res.brand || "",
-        category: res.category || "",
-        gender: res.gender || "Unisex",
+        title: res.title, description: res.description,
+        priceAmount: res.price.amount, priceCurrency: res.price.currency,
+        brand: res.brand || "", category: res.category || "", gender: res.gender || "Unisex",
       });
       setExistingImages(res.images || []);
-      setVariants(
-        (res.variants || []).map((v) => ({
-          stock: v.stock,
-          priceAmount: v.price.amount,
-          priceCurrency: v.price.currency,
-          attributes: Object.entries(v.attributes || {}).map(
-            ([key, value]) => ({
-              key,
-              value,
-            }),
-          ),
-          existingImages: v.images || [],
-          newImages: [],
-          newImagePreviews: [],
-        })),
-      );
+      setVariants((res.variants || []).map((v) => ({
+        stock: v.stock, priceAmount: v.price.amount, priceCurrency: v.price.currency,
+        attributes: Object.entries(v.attributes || {}).map(([key, value]) => ({ key, value })),
+        existingImages: v.images || [], newImages: [], newImagePreviews: [],
+      })));
     }
   }
 
-  useEffect(() => {
-    if (productId) getProductDetails();
-  }, [productId]);
+  useEffect(() => { if (productId) getProductDetails(); }, [productId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,182 +70,86 @@ const SellerProductDetails = () => {
   const handleNewImageChange = (e) => {
     const files = Array.from(e.target.files);
     setNewImages((prev) => [...prev, ...files]);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setNewImagePreviews((prev) => [...prev, ...previews]);
+    setNewImagePreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
   };
 
-  const removeNewImage = (index) => {
-    URL.revokeObjectURL(newImagePreviews[index]);
-    setNewImages((prev) => prev.filter((_, i) => i !== index));
-    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  const removeNewImage = (i) => {
+    URL.revokeObjectURL(newImagePreviews[i]);
+    setNewImages((prev) => prev.filter((_, j) => j !== i));
+    setNewImagePreviews((prev) => prev.filter((_, j) => j !== i));
   };
 
-  const removeExistingImage = (index) => {
-    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingImage = (i) => setExistingImages((prev) => prev.filter((_, j) => j !== i));
+
+  // Variant helpers
+  const addVariant = () => setVariants((prev) => [
+    ...prev,
+    { stock: 0, priceAmount: formData.priceAmount, priceCurrency: formData.priceCurrency,
+      attributes: [{ key: "", value: "" }], existingImages: [], newImages: [], newImagePreviews: [] },
+  ]);
+
+  const removeVariant = (i) => {
+    variants[i].newImagePreviews.forEach(URL.revokeObjectURL);
+    setVariants((prev) => prev.filter((_, j) => j !== i));
   };
 
-  // Variant Helpers
-  const addVariant = () => {
-    setVariants((prev) => [
-      ...prev,
-      {
-        stock: 0,
-        priceAmount: formData.priceAmount,
-        priceCurrency: formData.priceCurrency,
-        attributes: [{ key: "", value: "" }],
-        existingImages: [],
-        newImages: [],
-        newImagePreviews: [],
-      },
-    ]);
-  };
+  const setVariant = (i, patch) =>
+    setVariants((prev) => prev.map((v, j) => j === i ? { ...v, ...patch } : v));
 
-  const removeVariant = (index) => {
-    variants[index].newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
-    setVariants((prev) => prev.filter((_, i) => i !== index));
-  };
+  const handleVariantChange = (i, e) => setVariant(i, { [e.target.name]: e.target.value });
 
-  const handleVariantChange = (index, e) => {
-    const { name, value } = e.target;
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      newVariants[index] = { ...newVariants[index], [name]: value };
-      return newVariants;
-    });
-  };
+  const handleAttrChange = (vI, aI, field, val) =>
+    setVariants((prev) => prev.map((v, j) => {
+      if (j !== vI) return v;
+      const attrs = v.attributes.map((a, k) => k === aI ? { ...a, [field]: val } : a);
+      return { ...v, attributes: attrs };
+    }));
 
-  const handleVariantAttributeChange = (vIndex, aIndex, field, value) => {
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      const newAttrs = [...newVariants[vIndex].attributes];
-      newAttrs[aIndex] = { ...newAttrs[aIndex], [field]: value };
-      newVariants[vIndex] = { ...newVariants[vIndex], attributes: newAttrs };
-      return newVariants;
-    });
-  };
+  const addAttr = (vI) => setVariants((prev) => prev.map((v, j) =>
+    j === vI ? { ...v, attributes: [...v.attributes, { key: "", value: "" }] } : v));
 
-  const addAttribute = (vIndex) => {
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      newVariants[vIndex] = {
-        ...newVariants[vIndex],
-        attributes: [...newVariants[vIndex].attributes, { key: "", value: "" }],
-      };
-      return newVariants;
-    });
-  };
+  const removeAttr = (vI, aI) => setVariants((prev) => prev.map((v, j) =>
+    j === vI ? { ...v, attributes: v.attributes.filter((_, k) => k !== aI) } : v));
 
-  const removeAttribute = (vIndex, aIndex) => {
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      newVariants[vIndex] = {
-        ...newVariants[vIndex],
-        attributes: newVariants[vIndex].attributes.filter(
-          (_, i) => i !== aIndex,
-        ),
-      };
-      return newVariants;
-    });
-  };
-
-  const handleVariantNewImageChange = (vIndex, e) => {
+  const addVariantImage = (vI, e) => {
     const files = Array.from(e.target.files);
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      const previews = files.map((file) => URL.createObjectURL(file));
-      newVariants[vIndex] = {
-        ...newVariants[vIndex],
-        newImages: [...newVariants[vIndex].newImages, ...files],
-        newImagePreviews: [
-          ...newVariants[vIndex].newImagePreviews,
-          ...previews,
-        ],
-      };
-      return newVariants;
+    setVariant(vI, {
+      newImages: [...variants[vI].newImages, ...files],
+      newImagePreviews: [...variants[vI].newImagePreviews, ...files.map((f) => URL.createObjectURL(f))],
     });
   };
 
-  const removeVariantNewImage = (vIndex, iIndex) => {
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      URL.revokeObjectURL(newVariants[vIndex].newImagePreviews[iIndex]);
-      const newImages = newVariants[vIndex].newImages.filter(
-        (_, i) => i !== iIndex,
-      );
-      const newPreviews = newVariants[vIndex].newImagePreviews.filter(
-        (_, i) => i !== iIndex,
-      );
-      newVariants[vIndex] = {
-        ...newVariants[vIndex],
-        newImages: newImages,
-        newImagePreviews: newPreviews,
-      };
-      return newVariants;
+  const removeVariantNewImg = (vI, iI) => {
+    URL.revokeObjectURL(variants[vI].newImagePreviews[iI]);
+    setVariant(vI, {
+      newImages: variants[vI].newImages.filter((_, k) => k !== iI),
+      newImagePreviews: variants[vI].newImagePreviews.filter((_, k) => k !== iI),
     });
   };
 
-  const removeVariantExistingImage = (vIndex, iIndex) => {
-    setVariants((prev) => {
-      const newVariants = [...prev];
-      const newExisting = newVariants[vIndex].existingImages.filter(
-        (_, i) => i !== iIndex,
-      );
-      newVariants[vIndex] = {
-        ...newVariants[vIndex],
-        existingImages: newExisting,
-      };
-      return newVariants;
-    });
-  };
+  const removeVariantExistImg = (vI, iI) =>
+    setVariant(vI, { existingImages: variants[vI].existingImages.filter((_, k) => k !== iI) });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     const data = new FormData();
-    data.append("title", formData.title);
-    data.append("description", formData.description);
-    data.append("priceAmount", formData.priceAmount);
-    data.append("priceCurrency", formData.priceCurrency);
-    data.append("brand", formData.brand);
-    data.append("category", formData.category);
-    data.append("gender", formData.gender);
-    // Send existing images that we want to KEEP
+    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
     data.append("existingImages", JSON.stringify(existingImages));
+    newImages.forEach((img) => data.append("images", img));
 
-    // Only upload if new images are provided
-    if (newImages.length > 0) {
-      newImages.forEach((image) => {
-        data.append("images", image);
-      });
-    }
-
-    // Handle variants
-    const serializedVariants = variants.map((v, index) => {
-      // Append new files with unique keys
-      v.newImages.forEach((img) => {
-        data.append(`variant_${index}_images`, img);
-      });
-
-      // Format attributes Map
+    const serializedVariants = variants.map((v, idx) => {
+      v.newImages.forEach((img) => data.append(`variant_${idx}_images`, img));
       const attrs = {};
-      v.attributes.forEach((attr) => {
-        if (attr.key && attr.value) attrs[attr.key] = attr.value;
-      });
-
-      return {
-        stock: v.stock,
-        priceAmount: v.priceAmount,
-        priceCurrency: v.priceCurrency,
-        attributes: attrs,
-        // Include existing images URLs so backend knows what to KEEP
-        images: v.existingImages,
-      };
+      v.attributes.forEach(({ key, value }) => { if (key && value) attrs[key] = value; });
+      return { stock: v.stock, priceAmount: v.priceAmount, priceCurrency: v.priceCurrency, attributes: attrs, images: v.existingImages };
     });
 
     data.append("variants", JSON.stringify(serializedVariants));
-
     const result = await handleUpdateProduct(productId, data);
+    setSaving(false);
 
-    if (result && result.success) {
+    if (result?.success) {
       toast.success("Product updated successfully!");
       navigate("/seller/dashboard");
     } else if (result?.error) {
@@ -265,154 +157,99 @@ const SellerProductDetails = () => {
     }
   };
 
-  if (loading) return <Loader />;
+  // ── Image thumbnail shared component ───────────────────────────────────────
+  const ImgThumb = ({ src, onRemove, isNew, size = "16" }) => (
+    <div className={`relative w-${size} h-${size} rounded-2xl overflow-hidden group border-2 ${isNew ? "border-copper-green shadow-md shadow-copper-green/20" : "border-lacquered-licorice/8"}`}>
+      <img src={src} className="w-full h-full object-cover" alt="" />
+      {isNew && <span className="absolute top-1.5 left-1.5 bg-copper-green text-albescent-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">New</span>}
+      <button type="button" onClick={onRemove}
+        className="absolute inset-0 bg-red-500/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <LuTrash2 size={16} className="text-white" />
+      </button>
+    </div>
+  );
+
+  const AddImgBtn = ({ onChange, size = "16" }) => (
+    <label className={`w-${size} h-${size} flex flex-col items-center justify-center border-2 border-dashed border-lacquered-licorice/15 rounded-2xl cursor-pointer hover:border-copper-green hover:bg-copper-green/5 transition-all text-lacquered-licorice/20 hover:text-copper-green`}>
+      <LuImagePlus size={size === "16" ? 20 : 16} />
+      <span className="text-[7px] mt-1 font-black uppercase tracking-widest hidden sm:block">Add</span>
+      <input type="file" multiple accept="image/*" onChange={onChange} className="hidden" />
+    </label>
+  );
+
+  if (loading && !formData.title) return (
+    <div className="min-h-screen bg-albescent-white flex flex-col">
+      <Nav />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-copper-green border-t-transparent rounded-full animate-spin" />
+      </div>
+    </div>
+  );
 
   return (
-    <>
+    <div className="min-h-screen bg-albescent-white flex flex-col font-sans">
       <Nav />
-      <main className="min-h-screen py-8 px-4 flex items-center justify-center font-['Inter']">
-        <div className="max-w-4xl w-full bg-lacquered-licorice/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-playing-hooky/30">
-          <div className="grid grid-cols-1 md:grid-cols-5 h-full">
-            {/* Sidebar / Info */}
-            <div className="md:col-span-2 bg-gradient-to-br from-copper-green to-playing-hooky p-8 text-albescent-white flex flex-col justify-between relative overflow-hidden">
-              <div className="relative z-10">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="mb-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-70 hover:opacity-100 transition-opacity"
-                >
-                  <LuArrowLeft size={16} />
-                  Back
-                </button>
-                <LuPackage size={42} className="mb-4 opacity-90" />
-                <h1 className="text-3xl font-extrabold mb-4 tracking-tight leading-tight">
-                  Edit Product
-                </h1>
-                <p className="text-albescent-white/80 text-sm leading-relaxed font-medium">
-                  Refine your listing. You can update the basic info, manage
-                  variants, and refresh your product's visual presence.
-                </p>
-              </div>
 
-              {/* Decorative background glass element */}
-              <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            </div>
+      <main className="flex-1 container mx-auto max-w-5xl px-4 md:px-8 py-10">
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-4 mb-10">
+          <button onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-2xl border border-lacquered-licorice/10 flex items-center justify-center text-lacquered-licorice/40 hover:bg-lacquered-licorice hover:text-albescent-white hover:border-lacquered-licorice transition-all shadow-sm">
+            <LuArrowLeft size={16} />
+          </button>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-copper-green mb-0.5">Seller Dashboard</p>
+            <h1 className="text-3xl font-black text-lacquered-licorice tracking-tighter uppercase italic flex items-center gap-2">
+              <LuPackage size={24} className="text-copper-green" />
+              Edit Product
+            </h1>
+          </div>
+          <div className="ml-auto hidden md:flex items-center gap-2 bg-lacquered-licorice/5 border border-lacquered-licorice/8 px-4 py-2 rounded-2xl">
+            <span className="w-2 h-2 rounded-full bg-copper-green animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-lacquered-licorice/40">Live Listing</span>
+          </div>
+        </div>
 
-            {/* Scrollable Form Section */}
-            <div className="md:col-span-3 p-6 md:p-10 max-h-[85vh] overflow-y-auto scrollbar-hide">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <section className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-desert-khaki border-b border-playing-hooky/20 pb-2">
-                    General Information
-                  </h3>
+        {/* ── Form ────────────────────────────────────────────────────────── */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Grid: left form + right image sidebar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+            {/* ── Left: General Info ──────────────────────────────────────── */}
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-white rounded-[2rem] border border-lacquered-licorice/5 shadow-sm p-8 space-y-5">
+                <Section title="General Information">
                   <div>
-                    <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                      Product Title
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
-                      required
-                    />
+                    <label className={label}>Product Title</label>
+                    <input name="title" value={formData.title} onChange={handleChange} required
+                      placeholder="e.g. Oversized Acid Wash Tee" className={input} />
                   </div>
-
                   <div>
-                    <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows="4"
-                      className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all resize-none"
-                      required
-                    />
+                    <label className={label}>Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} required rows={4}
+                      placeholder="Tell buyers what makes this product special…"
+                      className={`${input} resize-none`} />
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                        Brand
-                      </label>
-                      <input
-                        type="text"
-                        name="brand"
-                        value={formData.brand}
-                        onChange={handleChange}
-                        className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
-                      />
+                      <label className={label}>Brand</label>
+                      <input name="brand" value={formData.brand} onChange={handleChange} placeholder="e.g. Snitch" className={input} />
                     </div>
                     <div>
-                      <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
-                      />
+                      <label className={label}>Category</label>
+                      <input name="category" value={formData.category} onChange={handleChange} placeholder="e.g. T-Shirts" className={input} />
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                      Gender
-                    </label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleChange}
-                      className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all cursor-pointer appearance-none"
-                    >
-                      <option value="Men">Men</option>
-                      <option value="Women">Women</option>
-                      <option value="Unisex">Unisex</option>
-                      <option value="Kids">Kids</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                      Available Stock
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleChange}
-                      className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
-                    />
-                  </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                        Base Price
-                      </label>
-                      <input
-                        type="number"
-                        name="priceAmount"
-                        value={formData.priceAmount}
-                        onChange={handleChange}
-                        className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
-                        required
-                      />
+                      <label className={label}>Gender</label>
+                      <select name="gender" value={formData.gender} onChange={handleChange} className={`${input} cursor-pointer`}>
+                        {["Men", "Women", "Unisex", "Kids"].map((g) => <option key={g}>{g}</option>)}
+                      </select>
                     </div>
                     <div>
-                      <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-2 ml-1">
-                        Currency
-                      </label>
-                      <select
-                        name="priceCurrency"
-                        value={formData.priceCurrency}
-                        onChange={handleChange}
-                        className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-4 py-3 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green transition-all cursor-pointer appearance-none"
-                      >
+                      <label className={label}>Currency</label>
+                      <select name="priceCurrency" value={formData.priceCurrency} onChange={handleChange} className={`${input} cursor-pointer`}>
                         <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
@@ -420,276 +257,163 @@ const SellerProductDetails = () => {
                       </select>
                     </div>
                   </div>
-                </section>
-
-                <section className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-desert-khaki border-b border-playing-hooky/20 pb-2">
-                    Product Imagery
-                  </h3>
-                  <div className="space-y-3">
-                    <label className="block text-albescent-white/90 text-[10px] font-bold uppercase tracking-wider mb-1 ml-1">
-                      Current & New Images
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                      {existingImages.map((img, i) => (
-                        <div
-                          key={`existing-${i}`}
-                          className="relative w-16 h-16 rounded-xl overflow-hidden border border-playing-hooky/30 group"
-                        >
-                          <img
-                            src={img.url}
-                            className="w-full h-full object-cover grayscale-[30%] opacity-80"
-                            alt="existing"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeExistingImage(i)}
-                            className="absolute inset-0 bg-red-500/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <LuTrash2 className="text-white" size={18} />
-                          </button>
-                          <div className="absolute top-0 right-0 p-1 bg-lacquered-licorice/40">
-                            <span className="text-[6px] font-bold text-white uppercase italic">
-                              Orig
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      {newImagePreviews.map((url, i) => (
-                        <div
-                          key={`new-${i}`}
-                          className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-copper-green shadow-lg shadow-copper-green/20 group"
-                        >
-                          <img
-                            src={url}
-                            className="w-full h-full object-cover"
-                            alt="new"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeNewImage(i)}
-                            className="absolute inset-0 bg-red-500/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <LuX className="text-white" size={18} />
-                          </button>
-                        </div>
-                      ))}
-                      <label className="w-16 h-16 flex flex-col items-center justify-center border-2 border-dashed border-playing-hooky/40 rounded-xl cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky hover:text-copper-green">
-                        <LuImagePlus size={20} />
-                        <span className="text-[7px] mt-1 font-bold uppercase tracking-tighter">
-                          Add New
-                        </span>
-                        <input
-                          type="file"
-                          multiple
-                          onChange={handleNewImageChange}
-                          className="hidden"
-                          accept="image/*"
-                        />
-                      </label>
+                  <div>
+                    <label className={label}>Base Price</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-lacquered-licorice/30">
+                        {formData.priceCurrency === "INR" ? "₹" : formData.priceCurrency === "USD" ? "$" : formData.priceCurrency === "EUR" ? "€" : "£"}
+                      </span>
+                      <input type="number" name="priceAmount" value={formData.priceAmount} onChange={handleChange} required
+                        placeholder="0.00" className={`${input} pl-8`} />
                     </div>
-                    {(newImages.length > 0 || existingImages.length > 0)}
                   </div>
-                </section>
+                </Section>
+              </div>
 
-                <section className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-playing-hooky/20 pb-2">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-desert-khaki">
-                      Product Variants
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={addVariant}
-                      className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-albescent-white hover:text-copper-green transition-colors bg-white/5 py-1.5 px-3 rounded-lg border border-white/5"
-                    >
-                      <LuPlus size={14} />
-                      New Variant
-                    </button>
+              {/* ── Variants ────────────────────────────────────────────────── */}
+              <div className="bg-white rounded-[2rem] border border-lacquered-licorice/5 shadow-sm p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-lacquered-licorice/40">Product Variants</h3>
+                    <div className="h-px flex-1 bg-lacquered-licorice/8 w-16" />
+                    {variants.length > 0 && (
+                      <span className="bg-lacquered-licorice text-albescent-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest">
+                        {variants.length}
+                      </span>
+                    )}
                   </div>
+                  <button type="button" onClick={addVariant}
+                    className="flex items-center gap-1.5 bg-copper-green text-albescent-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-lacquered-licorice transition-all shadow-sm active:scale-95">
+                    <LuPlus size={12} /> Add Variant
+                  </button>
+                </div>
 
-                  <div className="space-y-4">
-                    {variants.map((v, vIndex) => (
-                      <div
-                        key={vIndex}
-                        className="bg-lacquered-licorice/40 border border-playing-hooky/20 rounded-2xl p-5 space-y-4 relative group hover:border-playing-hooky/40 transition-all shadow-inner"
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-playing-hooky flex items-center gap-2">
-                            <LuLayers size={14} className="text-copper-green" />
-                            Variant #{vIndex + 1}
-                          </h4>
-                          <button
-                            type="button"
-                            onClick={() => removeVariant(vIndex)}
-                            className="text-red-400/50 hover:text-red-400 transition-colors p-1"
-                          >
-                            <LuTrash2 size={16} />
-                          </button>
+                {variants.length === 0 && (
+                  <div className="border-2 border-dashed border-lacquered-licorice/8 rounded-2xl p-10 text-center">
+                    <LuLayers size={32} className="text-lacquered-licorice/15 mx-auto mb-3" />
+                    <p className="text-[11px] font-bold text-lacquered-licorice/30 uppercase tracking-widest">No variants yet</p>
+                    <p className="text-xs text-lacquered-licorice/20 mt-1">Add size, colour or any attribute variant</p>
+                  </div>
+                )}
+
+                <div className="space-y-5">
+                  {variants.map((v, vI) => (
+                    <div key={vI} className="border border-lacquered-licorice/8 rounded-2xl p-6 space-y-5 hover:border-copper-green/20 transition-colors bg-albescent-white/40">
+                      {/* Variant header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <LuLayers size={13} className="text-copper-green" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-lacquered-licorice/60">
+                            Variant #{vI + 1}
+                          </span>
                         </div>
+                        <button type="button" onClick={() => removeVariant(vI)}
+                          className="w-7 h-7 rounded-xl bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                          <LuTrash2 size={12} />
+                        </button>
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[9px] font-bold uppercase tracking-wider text-albescent-white/40 mb-1.5 ml-1">
-                              Variant Price
-                            </label>
-                            <input
-                              type="number"
-                              name="priceAmount"
-                              value={v.priceAmount}
-                              onChange={(e) => handleVariantChange(vIndex, e)}
-                              className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-3 py-2 text-xs text-albescent-white focus:ring-1 focus:ring-copper-green outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[9px] font-bold uppercase tracking-wider text-albescent-white/40 mb-1.5 ml-1">
-                              In Stock
-                            </label>
-                            <input
-                              type="number"
-                              name="stock"
-                              value={v.stock}
-                              onChange={(e) => handleVariantChange(vIndex, e)}
-                              className="w-full bg-lacquered-licorice border border-playing-hooky/30 rounded-xl px-3 py-2 text-xs text-albescent-white focus:ring-1 focus:ring-copper-green outline-none"
-                            />
-                          </div>
+                      {/* Price + Stock */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={label}>Price</label>
+                          <input type="number" name="priceAmount" value={v.priceAmount}
+                            onChange={(e) => handleVariantChange(vI, e)} className={input} />
                         </div>
-
-                        {/* Attributes Array */}
-                        <div className="space-y-3">
-                          <label className="block text-[9px] font-bold uppercase tracking-wider text-albescent-white/40 ml-1">
-                            Technical Attributes
-                          </label>
-                          {v.attributes.map((attr, aIndex) => (
-                            <div key={aIndex} className="flex gap-2">
-                              <input
-                                type="text"
-                                placeholder="Attribute (e.g. Color)"
-                                value={attr.key}
-                                onChange={(e) =>
-                                  handleVariantAttributeChange(
-                                    vIndex,
-                                    aIndex,
-                                    "key",
-                                    e.target.value,
-                                  )
-                                }
-                                className="flex-1 bg-lacquered-licorice border border-playing-hooky/30 rounded-lg px-2 py-1.5 text-[10px] text-albescent-white focus:border-copper-green outline-none"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Value (e.g. Crimson)"
-                                value={attr.value}
-                                onChange={(e) =>
-                                  handleVariantAttributeChange(
-                                    vIndex,
-                                    aIndex,
-                                    "value",
-                                    e.target.value,
-                                  )
-                                }
-                                className="flex-1 bg-lacquered-licorice border border-playing-hooky/30 rounded-lg px-2 py-1.5 text-[10px] text-albescent-white focus:border-copper-green outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeAttribute(vIndex, aIndex)}
-                                className="text-red-400/40 hover:text-red-400 px-1"
-                              >
-                                <LuX size={14} />
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => addAttribute(vIndex)}
-                            className="text-[9px] font-bold uppercase tracking-wider text-copper-green hover:brightness-125 flex items-center gap-1 mt-1 ml-1"
-                          >
-                            <LuPlus size={10} /> Add Property
-                          </button>
-                        </div>
-
-                        {/* Variant Imagery */}
-                        <div className="space-y-2">
-                          <label className="block text-[9px] font-bold uppercase tracking-wider text-albescent-white/40 ml-1">
-                            Media
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {v.existingImages.map((img, i) => (
-                              <div
-                                key={`v-existing-${i}`}
-                                className="relative w-10 h-10 rounded-lg overflow-hidden border border-playing-hooky/20 group/vex"
-                              >
-                                <img
-                                  src={img.url}
-                                  className="w-full h-full object-cover grayscale-[50%] opacity-60"
-                                  alt="v-orig"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeVariantExistingImage(vIndex, i)
-                                  }
-                                  className="absolute inset-0 bg-red-500/30 flex items-center justify-center opacity-0 group-hover/vex:opacity-100 transition-opacity"
-                                >
-                                  <LuTrash2 size={12} className="text-white" />
-                                </button>
-                              </div>
-                            ))}
-                            {v.newImagePreviews.map((url, i) => (
-                              <div
-                                key={`v-new-${i}`}
-                                className="relative w-10 h-10 rounded-lg overflow-hidden border border-copper-green group/vimg"
-                              >
-                                <img
-                                  src={url}
-                                  className="w-full h-full object-cover"
-                                  alt="v-new"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeVariantNewImage(vIndex, i)
-                                  }
-                                  className="absolute inset-0 bg-red-500/30 flex items-center justify-center opacity-0 group-hover/vimg:opacity-100 transition-opacity"
-                                >
-                                  <LuX size={12} className="text-white" />
-                                </button>
-                              </div>
-                            ))}
-                            <label className="w-10 h-10 flex items-center justify-center border-2 border-dashed border-playing-hooky/30 rounded-lg cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky">
-                              <LuImagePlus size={16} />
-                              <input
-                                type="file"
-                                multiple
-                                onChange={(e) =>
-                                  handleVariantNewImageChange(vIndex, e)
-                                }
-                                className="hidden"
-                                accept="image/*"
-                              />
-                            </label>
-                          </div>
+                        <div>
+                          <label className={label}>Stock</label>
+                          <input type="number" name="stock" value={v.stock}
+                            onChange={(e) => handleVariantChange(vI, e)} className={input} />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
 
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-copper-green to-playing-hooky text-albescent-white font-black py-4 rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-3 group text-sm uppercase tracking-[0.2em] mt-8"
-                >
-                  <LuSave
-                    size={20}
-                    className="group-hover:scale-110 transition-transform"
-                  />
-                  Update Product
+                      {/* Attributes */}
+                      <div className="space-y-2">
+                        <label className={label}>Attributes</label>
+                        {v.attributes.map((attr, aI) => (
+                          <div key={aI} className="flex gap-2 items-center">
+                            <input type="text" placeholder="Key (e.g. Color)"
+                              value={attr.key} onChange={(e) => handleAttrChange(vI, aI, "key", e.target.value)}
+                              className={`${input} flex-1 text-xs py-2.5`} />
+                            <input type="text" placeholder="Value (e.g. Crimson)"
+                              value={attr.value} onChange={(e) => handleAttrChange(vI, aI, "value", e.target.value)}
+                              className={`${input} flex-1 text-xs py-2.5`} />
+                            <button type="button" onClick={() => removeAttr(vI, aI)}
+                              className="w-8 h-10 flex items-center justify-center text-lacquered-licorice/20 hover:text-red-400 transition-colors shrink-0">
+                              <LuX size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => addAttr(vI)}
+                          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-copper-green hover:text-lacquered-licorice transition-colors">
+                          <LuPlus size={11} /> Add Property
+                        </button>
+                      </div>
+
+                      {/* Variant images */}
+                      <div>
+                        <label className={label}>Images</label>
+                        <div className="flex flex-wrap gap-2.5">
+                          {v.existingImages.map((img, iI) => (
+                            <ImgThumb key={`ve-${iI}`} src={img.url} size="14" onRemove={() => removeVariantExistImg(vI, iI)} />
+                          ))}
+                          {v.newImagePreviews.map((url, iI) => (
+                            <ImgThumb key={`vn-${iI}`} src={url} size="14" isNew onRemove={() => removeVariantNewImg(vI, iI)} />
+                          ))}
+                          <AddImgBtn size="14" onChange={(e) => addVariantImage(vI, e)} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Right sidebar: Images ───────────────────────────────────── */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-[2rem] border border-lacquered-licorice/5 shadow-sm p-6 space-y-5 lg:sticky lg:top-28">
+                <Section title="Product Images">
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {existingImages.map((img, i) => (
+                      <ImgThumb key={`e-${i}`} src={img.url} onRemove={() => removeExistingImage(i)} />
+                    ))}
+                    {newImagePreviews.map((url, i) => (
+                      <ImgThumb key={`n-${i}`} src={url} isNew onRemove={() => removeNewImage(i)} />
+                    ))}
+                    <AddImgBtn onChange={handleNewImageChange} />
+                  </div>
+                  <p className="text-[9px] font-bold text-lacquered-licorice/20 uppercase tracking-widest text-center">
+                    {existingImages.length + newImages.length} image{existingImages.length + newImages.length !== 1 ? "s" : ""}
+                  </p>
+                </Section>
+
+                {/* Save button */}
+                <button type="submit" disabled={saving}
+                  className="w-full bg-lacquered-licorice text-albescent-white font-black py-4 rounded-2xl hover:bg-copper-green transition-all duration-500 shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] tracking-[0.25em] uppercase flex items-center justify-center gap-2.5">
+                  {saving ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <LuSave size={15} />
+                  )}
+                  {saving ? "Saving…" : "Update Product"}
                 </button>
-              </form>
+
+                <p className="text-[9px] text-center font-bold text-lacquered-licorice/20 uppercase tracking-widest">
+                  Changes go live immediately
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       </main>
-    </>
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-lacquered-licorice/5 text-center mt-8">
+        <p className="text-[9px] font-black tracking-[0.4em] text-lacquered-licorice/20 uppercase">
+          © 2026 Snitch Seller Platform
+        </p>
+      </footer>
+    </div>
   );
 };
 

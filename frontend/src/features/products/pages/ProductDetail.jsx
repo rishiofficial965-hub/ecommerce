@@ -7,7 +7,7 @@ import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
 import { useToast } from "../../common/Toast";
 import {
-  FaShoppingCart,
+  FaShoppingBag,
   FaHeart,
   FaChevronLeft,
   FaChevronRight,
@@ -15,6 +15,10 @@ import {
   FaTruck,
   FaUndo,
   FaArrowLeft,
+  FaMinus,
+  FaPlus,
+  FaStar,
+  FaChevronRight as FaBreadcrumbSep,
 } from "react-icons/fa";
 
 // Swiper imports
@@ -39,26 +43,25 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [wishlisted, setWishlisted] = useState(false);
 
   const handleAddToBag = async () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
+    if (!user) { navigate("/login"); return; }
     if (!selectedVariant && product?.variants?.length > 0) {
       toast.info("Please select a variant (size / colour) first.");
       return;
     }
-
+    setAdding(true);
     const res = await handleAddToCart({
       productId: product._id,
       varientId: selectedVariant?._id || product.variants[0]._id,
-      quantity: 1,
+      quantity: qty,
     });
-
+    setAdding(false);
     if (res.success) {
-      toast.success("Added to bag!");
+      toast.success(`${qty > 1 ? qty + "x " : ""}${product.title} added to bag!`);
       navigate("/cart");
     } else {
       toast.error(res.error || "Could not add to bag. Please try again.");
@@ -116,17 +119,23 @@ const ProductDetail = () => {
       <Nav />
 
       <main className="flex-1 container mx-auto max-w-6xl px-6 py-4 md:py-8">
-        {/* Back Button */}
+        {/* Breadcrumb */}
+        <nav className="mb-5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-lacquered-licorice/30">
+          <button onClick={() => navigate("/")} className="hover:text-copper-green transition-colors">Home</button>
+          <FaBreadcrumbSep size={8} />
+          <button onClick={() => navigate("/")} className="hover:text-copper-green transition-colors">{product?.category || "Shop"}</button>
+          <FaBreadcrumbSep size={8} />
+          <span className="text-lacquered-licorice/60 line-clamp-1 max-w-[180px]">{product?.title}</span>
+        </nav>
+
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-lacquered-licorice/60 hover:text-copper-green transition-colors group"
+          className="mb-6 flex items-center gap-2 text-lacquered-licorice/40 hover:text-copper-green transition-colors group w-fit"
         >
-          <div className="w-8 h-8 rounded-full border border-lacquered-licorice/10 flex items-center justify-center group-hover:bg-copper-green group-hover:text-albescent-white transition-all shadow-sm">
-            <FaArrowLeft size={12} />
+          <div className="w-8 h-8 rounded-full border border-lacquered-licorice/10 flex items-center justify-center group-hover:bg-copper-green group-hover:text-albescent-white group-hover:border-copper-green transition-all shadow-sm">
+            <FaArrowLeft size={11} />
           </div>
-          <span className="font-black uppercase tracking-widest text-[10px]">
-            Go Back
-          </span>
+          <span className="font-black uppercase tracking-widest text-[10px]">Back</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
@@ -216,6 +225,16 @@ const ProductDetail = () => {
                   </span>
                 )}
               </div>
+              {/* Rating (decorative) */}
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar key={i} size={11} className={i < 4 ? "text-yellow-400" : "text-lacquered-licorice/10"} />
+                  ))}
+                </div>
+                <span className="text-[10px] font-bold text-lacquered-licorice/40">4.0 · 128 reviews</span>
+              </div>
+
               <h1 className="text-3xl md:text-4xl font-black text-lacquered-licorice tracking-tighter uppercase leading-tight">
                 {product.title}
               </h1>
@@ -338,24 +357,60 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                onClick={handleAddToBag}
-                className="flex-1 group bg-copper-green text-albescent-white py-3.5 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95"
-              >
-                <FaShoppingCart
-                  size={14}
-                  className="group-hover:scale-110 transition-transform"
-                />
-                ADD TO BAG
-              </button>
-              <button className="w-full sm:w-14 h-11 sm:h-auto rounded-2xl border-2 border-lacquered-licorice/10 flex items-center justify-center text-lacquered-licorice hover:bg-lacquered-licorice hover:text-albescent-white transition-all duration-300 group shadow-sm">
-                <FaHeart
-                  size={14}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              </button>
+            {/* Quantity + Actions */}
+            <div className="space-y-3 pt-2">
+              {/* Quantity stepper */}
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-lacquered-licorice/40">Qty</span>
+                <div className="flex items-center bg-albescent-white/80 border border-lacquered-licorice/8 rounded-xl overflow-hidden shadow-inner">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    disabled={qty <= 1}
+                    className="w-10 h-10 flex items-center justify-center text-lacquered-licorice/40 hover:text-lacquered-licorice hover:bg-white transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <FaMinus size={9} />
+                  </button>
+                  <span className="w-10 text-center text-sm font-black tabular-nums">{qty}</span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(displayStock || 99, q + 1))}
+                    disabled={displayStock > 0 && qty >= displayStock}
+                    className="w-10 h-10 flex items-center justify-center text-lacquered-licorice/40 hover:text-lacquered-licorice hover:bg-white transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <FaPlus size={9} />
+                  </button>
+                </div>
+                {displayStock > 0 && (
+                  <span className="text-[9px] font-bold text-lacquered-licorice/25 uppercase tracking-widest">
+                    {displayStock} available
+                  </span>
+                )}
+              </div>
+
+              {/* CTA row */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToBag}
+                  disabled={adding || displayStock === 0}
+                  className="flex-1 group bg-copper-green text-albescent-white py-4 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-2.5 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {adding ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <FaShoppingBag size={13} className="group-hover:scale-110 transition-transform" />
+                  )}
+                  {displayStock === 0 ? "OUT OF STOCK" : adding ? "ADDING…" : "ADD TO BAG"}
+                </button>
+                <button
+                  onClick={() => setWishlisted((w) => !w)}
+                  className={`w-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 shadow-sm active:scale-95 ${
+                    wishlisted
+                      ? "border-red-400 bg-red-50 text-red-400"
+                      : "border-lacquered-licorice/10 text-lacquered-licorice hover:border-red-300 hover:bg-red-50 hover:text-red-400"
+                  }`}
+                >
+                  <FaHeart size={14} />
+                </button>
+              </div>
             </div>
 
             {/* Features/Trust Badges */}

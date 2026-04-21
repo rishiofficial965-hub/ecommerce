@@ -20,6 +20,12 @@ body {
   background-color: var(--c-desert-khaki);
   color: var(--c-lacquered-licorice);
   font-family: 'Inter', sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* Custom scale utility not in Tailwind defaults */
+.group:hover .group-hover\:scale-108 {
+  transform: scale(1.08);
 }
 
 button, label, input[type="button"], input[type="submit"], input[type="reset"] {

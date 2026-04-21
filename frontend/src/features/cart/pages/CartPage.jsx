@@ -1,16 +1,21 @@
 import { useCart } from "../hook/useCart";
 import Nav from "../../products/components/Nav";
-import { FaTrash, FaMinus, FaPlus, FaArrowLeft, FaShieldAlt, FaTruck } from "react-icons/fa";
+import { FaTrash, FaMinus, FaPlus, FaArrowLeft, FaShieldAlt, FaTruck, FaTag, FaCheck, FaChevronRight } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Loader from "../../auth/components/Loader";
 import { motion, AnimatePresence } from "framer-motion";
+
+const FREE_SHIPPING_THRESHOLD = 999;
 
 const CartPage = () => {
   const navigate = useNavigate();
   const { cart, loading, handleGetCart, handleUpdateQuantity, handleRemoveFromCart } = useCart();
   const { user } = useSelector((state) => state.auth);
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -113,10 +118,17 @@ const CartPage = () => {
                         </button>
                       </div>
 
-                      <div className="flex flex-wrap gap-3">
-                        <span className="px-3 py-1 bg-lacquered-licorice/5 rounded-full text-[9px] font-black uppercase tracking-widest border border-lacquered-licorice/5">
-                           Variant ID: {String(item.variant).slice(-6).toUpperCase()}
-                        </span>
+                      <div className="flex flex-wrap gap-2">
+                        {item.product.brand && (
+                          <span className="px-3 py-1 bg-lacquered-licorice/5 rounded-full text-[9px] font-black uppercase tracking-widest border border-lacquered-licorice/5">
+                            {item.product.brand}
+                          </span>
+                        )}
+                        {item.product.category && (
+                          <span className="px-3 py-1 bg-lacquered-licorice/5 rounded-full text-[9px] font-black uppercase tracking-widest border border-lacquered-licorice/5">
+                            {item.product.category}
+                          </span>
+                        )}
                         <span className="px-3 py-1 bg-copper-green/5 text-copper-green rounded-full text-[9px] font-black uppercase tracking-widest border border-copper-green/10">
                           In Stock
                         </span>
@@ -217,15 +229,54 @@ const CartPage = () => {
               </div>
             </div>
 
-            <div className="mt-8 p-6 border-2 border-dashed border-lacquered-licorice/10 rounded-3xl flex items-center justify-between group cursor-pointer hover:border-copper-green/30 transition-colors">
-              <div className="flex flex-col gap-1">
-                <p className="text-[10px] font-black uppercase tracking-widest">Apply Promo Code</p>
-                <p className="text-[9px] font-medium text-lacquered-licorice/40">Got a discount from our newsletter?</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-lacquered-licorice/5 flex items-center justify-center group-hover:bg-copper-green group-hover:text-albescent-white transition-all">
-                <FaPlus size={10} />
-              </div>
+            {/* Promo Code */}
+            <div className="mt-6 border border-lacquered-licorice/8 rounded-3xl overflow-hidden">
+              <button
+                onClick={() => setPromoOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-lacquered-licorice/3 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <FaTag size={12} className="text-copper-green" />
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest">{promoApplied ? "Promo Applied 🎉" : "Apply Promo Code"}</p>
+                    {promoApplied && <p className="text-[9px] text-copper-green font-bold mt-0.5">{promoCode} — 10% off</p>}
+                  </div>
+                </div>
+                <FaChevronRight size={10} className={`text-lacquered-licorice/30 transition-transform duration-300 ${promoOpen ? "rotate-90" : ""}`} />
+              </button>
+              {promoOpen && (
+                <div className="px-5 pb-5 flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Enter code..."
+                    className="flex-1 bg-albescent-white border border-lacquered-licorice/10 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-copper-green/20"
+                  />
+                  <button
+                    onClick={() => { if (promoCode === "SNITCH10") { setPromoApplied(true); setPromoOpen(false); } }}
+                    className="bg-lacquered-licorice text-albescent-white px-5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-copper-green transition-colors flex items-center gap-1.5"
+                  >
+                    {promoApplied ? <FaCheck size={10} /> : null} Apply
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Free shipping progress */}
+            {(cart.totalAmount || 0) < FREE_SHIPPING_THRESHOLD && (
+              <div className="mt-4 bg-orange-50 border border-orange-100 rounded-2xl px-5 py-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-2">
+                  Add INR {(FREE_SHIPPING_THRESHOLD - (cart.totalAmount || 0)).toLocaleString()} more for free shipping
+                </p>
+                <div className="w-full h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-orange-400 rounded-full transition-all duration-700"
+                    style={{ width: `${Math.min(100, ((cart.totalAmount || 0) / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -234,4 +285,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-;

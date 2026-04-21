@@ -1,207 +1,165 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Nav from "../../products/components/Nav";
-import Loader from "../components/Loader";
 import { useAuth } from "../hook/useAuth";
+import { FaEye, FaEyeSlash, FaGoogle, FaShoppingBag } from "react-icons/fa";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [eyetoggle, setEyetoggle] = useState(true);
+  const [showPass, setShowPass] = useState(false);
   const [useEmailLogin, setUseEmailLogin] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { handleLogin, handleForgetPassword, loading } = useAuth();
   const user = useSelector((state) => state.auth.user);
- 
+
   useEffect(() => {
-    if (user) {
-      if (user.role === "seller") {
-        navigate("/seller/dashboard");
-      } else {
-        navigate("/");
-      }
-    }
+    if (user) navigate(user.role === "seller" ? "/seller/dashboard" : "/");
   }, [user, navigate]);
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    const credentials = useEmailLogin
-      ? { email, password }
-      : { username, password };
-
+    const credentials = useEmailLogin ? { email, password } : { username, password };
     const result = await handleLogin(credentials);
-
     if (!result.success) {
       setError(result.error || "Invalid credentials");
       setPassword("");
-      // If backend says user is unverified, redirect to OTP verification
-      if (result.unverified) {
-        navigate("/verify-otp");
-      }
+      if (result.unverified) navigate("/verify-otp");
       return;
     }
+    navigate(result.user.role === "buyer" ? "/" : "/seller/dashboard");
+  };
 
-    const redirectPath =
-      result.user.role === "buyer" ? "/" : "/seller/dashboard";
-
-    navigate(redirectPath);
-    setEmail("");
-    setUsername("");
-    setPassword("");
-  }
-
-  const handleForgotPasswordRequested = async () => {
-    if (!useEmailLogin) {
-      setUseEmailLogin(true);
-      setError("Please enter your email address to reset your password.");
-      return;
-    }
-
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
-
-    const payload = useEmailLogin ? { email } : { username };
-    const result = await handleForgetPassword(payload);
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
+  const handleForgotPassword = async () => {
+    if (!useEmailLogin) { setUseEmailLogin(true); setError("Enter your email to reset password."); return; }
+    if (!email) { setError("Please enter your email address."); return; }
+    const result = await handleForgetPassword({ email });
+    if (!result.success) { setError(result.error); return; }
     navigate("/forget-password");
   };
 
-  const inputClass =
-    "w-full bg-copper-green/10 text-lacquered-licorice font-normal placeholder-lacquered-licorice/30 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-playing-hooky border border-copper-green/20 transition-all";
-
-  if (loading) return <Loader />;
+  const inputBase = "w-full bg-white/60 border border-lacquered-licorice/10 text-lacquered-licorice placeholder:text-lacquered-licorice/30 px-4 py-3.5 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-copper-green/30 focus:border-copper-green/40 focus:bg-white transition-all";
 
   return (
-    <div className="min-h-screen bg-desert-khaki flex flex-col">
-      <Nav />
-      <main className="flex-1 flex flex-col justify-center items-center p-4 pb-10">
-        <div
-          className="relative z-10 flex flex-col items-center gap-4 w-full max-w-sm bg-albescent-white/40 backdrop-blur-md border border-copper-green/20 rounded-2xl px-8 py-6 
-  shadow-[0_10px_30px_rgba(63,78,60,0.1)]"
-        >
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-full bg-copper-green flex items-center justify-center mb-2 shadow-[0_5px_15px_rgba(63,78,60,0.2)]">
-            <div className="w-6 h-6 bg-albescent-white rounded-sm animate-soft-rotate"></div>
+    <div className="min-h-screen flex font-sans">
+      {/* ── Left panel — branding ───────────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-lacquered-licorice relative overflow-hidden flex-col items-center justify-center p-16">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=900')] bg-cover bg-center opacity-10" />
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-copper-green/20 to-transparent" />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-playing-hooky/10 rounded-full blur-3xl" />
+
+        <div className="relative z-10 text-center">
+          <div className="flex items-center justify-center gap-3 mb-12">
+            <div className="w-10 h-10 bg-copper-green rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-albescent-white font-black text-lg">S</span>
+            </div>
+            <span className="text-2xl font-black tracking-tighter text-albescent-white">SNITCH</span>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-lacquered-licorice">
-            Welcome back
-          </h1>
+          <h2 className="text-5xl font-black text-albescent-white tracking-tighter leading-none mb-4 uppercase italic">
+            Style Is<br /><span className="text-playing-hooky">Everything.</span>
+          </h2>
+          <p className="text-albescent-white/40 text-sm font-medium max-w-xs mx-auto leading-relaxed">
+            Sign in to access your orders, wishlist, and exclusive early drops.
+          </p>
+
+          <div className="mt-16 grid grid-cols-3 gap-6">
+            {["Free Returns", "Secure Pay", "New Drops"].map((t) => (
+              <div key={t} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-albescent-white/40">{t}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {error && (
-          <div className="w-full bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <p className="text-red-600 text-sm text-center font-medium">
-              {error}
-            </p>
+      {/* ── Right panel — form ──────────────────────────────────────────── */}
+      <div className="flex-1 bg-albescent-white flex flex-col items-center justify-center px-6 py-12">
+        {/* Mobile logo */}
+        <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden">
+          <div className="w-9 h-9 bg-copper-green rounded-xl flex items-center justify-center shadow-md">
+            <span className="text-albescent-white font-black text-lg">S</span>
           </div>
-        )}
+          <span className="text-xl font-black tracking-tighter text-lacquered-licorice">SNITCH</span>
+        </Link>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-          <div className="flex flex-col gap-3">
+        <div className="w-full max-w-sm">
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-lacquered-licorice tracking-tighter mb-1">Welcome back</h1>
+            <p className="text-lacquered-licorice/40 text-sm font-medium">Sign in to your account to continue.</p>
+          </div>
+
+          {error && (
+            <div className="mb-5 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+              <p className="text-red-600 text-xs font-bold">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {!useEmailLogin ? (
-              <input
-                onChange={(e) => setUsername(e.target.value)}
-                value={username}
-                type="text"
-                name="username"
-                placeholder="Username"
-                className={inputClass}
-              />
+              <input value={username} onChange={(e) => setUsername(e.target.value)}
+                type="text" name="username" placeholder="Username" required className={inputBase} />
             ) : (
-              <input
-                onChange={(e) => setEmail(e.target.value)}
-                value={email}
-                type="email"
-                name="email"
-                placeholder="Email address"
-                className={inputClass}
-              />
+              <input value={email} onChange={(e) => setEmail(e.target.value)}
+                type="email" name="email" placeholder="Email address" required className={inputBase} />
             )}
 
-            <div className="relative w-full">
-              <input
-                onChange={(e) => setPassword(e.target.value)}
-                value={password}
-                type={eyetoggle ? "password" : "text"}
-                name="password"
-                placeholder="Password"
-                className={inputClass}
-              />
-              <div
-                onClick={() => setEyetoggle(!eyetoggle)}
-                className="absolute right-4 top-3.5 cursor-pointer text-lacquered-licorice/30 hover:text-lacquered-licorice/60 transition"
-              >
-                <i
-                  className={`ri-${eyetoggle ? "eye-off-line" : "eye-line"} text-lg`}
-                ></i>
-              </div>
+            <div className="relative">
+              <input value={password} onChange={(e) => setPassword(e.target.value)}
+                type={showPass ? "text" : "password"} name="password" placeholder="Password" required className={inputBase} />
+              <button type="button" onClick={() => setShowPass((v) => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-lacquered-licorice/30 hover:text-lacquered-licorice transition-colors">
+                {showPass ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+              </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between text-xs px-1">
-            <button
-              type="button"
-              onClick={() => setUseEmailLogin(!useEmailLogin)}
-              className="text-lacquered-licorice/50 hover:text-lacquered-licorice transition-colors font-medium"
-            >
-              Sign in with {useEmailLogin ? "Username" : "Email"}
-            </button>
-            <button
-              type="button"
-              onClick={handleForgotPasswordRequested}
-              className="text-lacquered-licorice/50 hover:text-lacquered-licorice transition-colors cursor-pointer"
-            >
-              Forgot password?
-            </button>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-copper-green text-albescent-white font-semibold py-3.5 hover:bg-lacquered-licorice transition-all active:scale-[0.98] cursor-pointer mt-2 shadow-[0_4px_12px_rgba(63,78,60,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? "Signing in..." : "Continue"}
-            </button>
-            <div className="text-center my-3 text-sm text-gray-500">
-              ---------- or ----------
+            <div className="flex items-center justify-between pt-1">
+              <button type="button" onClick={() => setUseEmailLogin((v) => !v)}
+                className="text-[11px] font-bold text-lacquered-licorice/40 hover:text-copper-green transition-colors uppercase tracking-widest">
+                Use {useEmailLogin ? "username" : "email"}
+              </button>
+              <button type="button" onClick={handleForgotPassword}
+                className="text-[11px] font-bold text-copper-green hover:text-lacquered-licorice transition-colors">
+                Forgot password?
+              </button>
             </div>
-            <a
-              className="flex items-center justify-center rounded-full bg-white px-3 py-3 cursor-pointer hover:bg-copper-green/20 transition-all active:scale-[0.98] shadow-[0_4px_12px_rgba(63,78,60,0.2)]"
-              href="/api/auth/google"
-            >
-              <i className="fa-brands fa-google text-lg"></i>
+
+            <button type="submit" disabled={loading}
+              className="w-full bg-lacquered-licorice text-albescent-white font-black py-4 rounded-2xl hover:bg-copper-green transition-all duration-500 shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm tracking-widest uppercase mt-2">
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Signing in…
+                </span>
+              ) : "Continue"}
+            </button>
+
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-lacquered-licorice/8" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-lacquered-licorice/25">or</span>
+              <div className="flex-1 h-px bg-lacquered-licorice/8" />
+            </div>
+
+            <a href="/api/auth/google"
+              className="flex items-center justify-center gap-3 w-full bg-white border border-lacquered-licorice/10 rounded-2xl py-3.5 text-xs font-black uppercase tracking-widest text-lacquered-licorice hover:bg-lacquered-licorice hover:text-albescent-white transition-all duration-300 shadow-sm active:scale-95">
+              <FaGoogle size={14} /> Continue with Google
             </a>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-lacquered-licorice/40 font-medium">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-copper-green font-black hover:underline underline-offset-4">Sign up</Link>
+          </p>
+
+          <div className="mt-10 flex justify-center gap-4 text-[10px] text-lacquered-licorice/20 font-bold uppercase tracking-widest">
+            <span className="cursor-pointer hover:text-lacquered-licorice/40 transition-colors">Terms</span>
+            <span>·</span>
+            <span className="cursor-pointer hover:text-lacquered-licorice/40 transition-colors">Privacy</span>
           </div>
-        </form>
-
-        <p className="text-lacquered-licorice/50 text-sm font-medium">
-          Don't have an account?{" "}
-          <Link
-            className="text-copper-green font-semibold hover:underline underline-offset-4"
-            to="/register"
-          >
-            Sign up
-          </Link>
-        </p>
+        </div>
       </div>
-
-      <div className="mt-8 flex gap-4 text-[11px] text-lacquered-licorice/30 font-medium tracking-wide">
-        <span>Terms of use</span>
-        <span className="w-1 h-1 bg-lacquered-licorice/20 rounded-full mt-1.5"></span>
-        <span>Privacy policy</span>
-      </div>
-      </main>
     </div>
   );
 };
