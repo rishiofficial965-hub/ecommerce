@@ -14,12 +14,14 @@ import {
 } from "react-icons/lu";
 import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
+import { useToast } from "../../common/Toast";
 
 const SellerProductDetails = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { handleGetProductDetails, handleUpdateProduct } = useProduct();
   const loading = useSelector((state) => state.product.loading);
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -256,10 +258,10 @@ const SellerProductDetails = () => {
     const result = await handleUpdateProduct(productId, data);
 
     if (result && result.success) {
-      alert("Product updated successfully!");
+      toast.success("Product updated successfully!");
       navigate("/seller/dashboard");
     } else if (result?.error) {
-      alert(result.error);
+      toast.error(result.error);
     }
   };
 

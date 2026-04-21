@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "../../cart/hook/useCart";
 import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
+import { useToast } from "../../common/Toast";
 import {
   FaShoppingCart,
   FaHeart,
@@ -33,6 +34,7 @@ const ProductDetail = () => {
   const { handleAddToCart } = useCart();
   const loading = useSelector((state) => state.product.loading);
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
 
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -45,18 +47,21 @@ const ProductDetail = () => {
     }
 
     if (!selectedVariant && product?.variants?.length > 0) {
-      alert("Please select a variant (size/color) first!");
+      toast.info("Please select a variant (size / colour) first.");
       return;
     }
 
     const res = await handleAddToCart({
       productId: product._id,
-      varientId: selectedVariant?._id || product.variants[0]._id, // Fallback if no variants but somehow reachable
+      varientId: selectedVariant?._id || product.variants[0]._id,
       quantity: 1,
     });
 
     if (res.success) {
+      toast.success("Added to bag!");
       navigate("/cart");
+    } else {
+      toast.error(res.error || "Could not add to bag. Please try again.");
     }
   };
 

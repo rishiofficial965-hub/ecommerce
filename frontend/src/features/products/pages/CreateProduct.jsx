@@ -4,10 +4,12 @@ import { useProduct } from "../hooks/useProduct.js";
 import { LuPackagePlus, LuImagePlus, LuX, LuPlus, LuTrash2, LuLayers } from "react-icons/lu";
 import Loader from "../../auth/components/Loader.jsx";
 import Nav from "../components/Nav.jsx";
+import { useToast } from "../../common/Toast";
 
 const CreateProduct = () => {
   const { loading } = useSelector((state) => state.auth);
   const { handleCreateProduct } = useProduct();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -190,9 +192,9 @@ const CreateProduct = () => {
         v.imagePreviews.forEach((url) => URL.revokeObjectURL(url)),
       );
       setVariants([]);
-      alert("Product created successfully!");
+      toast.success("Product created successfully!");
     } else if (result?.error) {
-      alert(result.error);
+      toast.error(result.error);
     }
   };
 

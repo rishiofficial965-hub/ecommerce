@@ -6,6 +6,7 @@ import { useCart } from "../../cart/hook/useCart";
 import Nav from "../components/Nav";
 import { FaShoppingCart, FaRegHeart, FaArrowRight, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "../../common/Toast";
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -16,9 +17,10 @@ const Home = () => {
   const { handleGetAllProducts } = useProduct();
   const { handleAddToCart } = useCart();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleQuickAdd = async (e, product) => {
-    e.stopPropagation(); // Prevent navigating to details
+    e.stopPropagation();
     if (!user) {
       navigate("/login");
       return;
@@ -26,7 +28,7 @@ const Home = () => {
 
     const firstVariantId = product.variants?.[0]?._id;
     if (!firstVariantId) {
-      alert("This product is currently unavailable.");
+      toast.error("This product is currently unavailable.");
       return;
     }
 
@@ -37,7 +39,9 @@ const Home = () => {
     });
 
     if (res.success) {
-      alert(`${product.title} added to bag!`);
+      toast.success(`${product.title} added to bag!`);
+    } else {
+      toast.error(res.error || "Could not add to bag. Please try again.");
     }
   };
 
