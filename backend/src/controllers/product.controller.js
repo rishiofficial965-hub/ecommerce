@@ -1,6 +1,21 @@
 import productModel from "../model/product.model.js";
 import { uploadFile } from "../services/storage.service.js";
 
+// Helper to upload files
+const uploadImages = async (req, fieldname) => {
+  if (!req.files) return [];
+  const files = req.files.filter((f) => f.fieldname === fieldname);
+  return Promise.all(
+    files.map(async (file) => {
+      const uploadResult = await uploadFile({
+        buffer: file.buffer,
+        fileName: file.originalname,
+      });
+      return { url: uploadResult.url };
+    }),
+  );
+};
+
 export async function createProduct(req, res) {
   try {
     const { title, description, priceAmount, priceCurrency, variants: variantsRaw } = req.body;
@@ -13,27 +28,13 @@ export async function createProduct(req, res) {
 
     const variants = variantsRaw ? JSON.parse(variantsRaw) : [];
 
-    // Helper to upload files
-    const uploadImages = async (fieldname) => {
-      const files = req.files.filter((f) => f.fieldname === fieldname);
-      return Promise.all(
-        files.map(async (file) => {
-          const uploadResult = await uploadFile({
-            buffer: file.buffer,
-            fileName: file.originalname,
-          });
-          return { url: uploadResult.url };
-        }),
-      );
-    };
-
     // Upload main images
-    const images = await uploadImages("images");
+    const images = await uploadImages(req, "images");
 
     // Upload variant images and process variants
     const processedVariants = await Promise.all(
       variants.map(async (variant, index) => {
-        const variantImages = await uploadImages(`variant_${index}_images`);
+        const variantImages = await uploadImages(req, `variant_${index}_images`);
         return {
           images: variantImages,
           stock: variant.stock || 0,
@@ -79,6 +80,7 @@ export async function createProduct(req, res) {
       });
   }
 }
+
 
 export async function getSellerProducts(req, res) {
   try {
@@ -127,5 +129,76 @@ export async function deleteProduct(req, res) {
     return res
       .status(500)
       .json({ success: false, message: "Failed to delete product." });
+  }
+}
+
+export async function updateProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      description,
+      priceAmount,
+      priceCurrency,
+      variants: variantsRaw,
+    } = req.body;
+
+    const product = await productModel.findById(id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    // Update only sent fields
+    if (title !== undefined) product.title = title;
+    if (description !== undefined) product.description = description;
+    if (priceAmount !== undefined) product.price.amount = priceAmount;
+    if (priceCurrency !== undefined) product.price.currency = priceCurrency;
+
+    const hasFiles = req.files && req.files.length > 0;
+
+    // Handle main images
+    const existingMainImages = req.body.existingImages
+      ? JSON.parse(req.body.existingImages)
+      : product.images;
+    const newMainImages = hasFiles ? await uploadImages(req, "images") : [];
+    product.images = [...existingMainImages, ...newMainImages];
+
+    // Handle variants
+    if (variantsRaw !== undefined) {
+      const variants = JSON.parse(variantsRaw);
+      const processedVariants = await Promise.all(
+        variants.map(async (variant, index) => {
+          const variantImages = hasFiles
+            ? await uploadImages(req, `variant_${index}_images`)
+            : [];
+          return {
+            // Merge existing variant images with newly uploaded ones
+            images: [...(variant.images || []), ...variantImages],
+            stock: variant.stock !== undefined ? variant.stock : 0,
+            attributes: variant.attributes || {},
+            price: {
+              amount:
+                variant.priceAmount || (variant.price && variant.price.amount),
+              currency:
+                variant.priceCurrency ||
+                (variant.price && variant.price.currency) ||
+                priceCurrency ||
+                product.price.currency,
+            },
+          };
+        }),
+      );
+      product.variants = processedVariants;
+    }
+
+    await product.save();
+    return res.status(200).json({ success: true, product });
+  } catch (err) {
+    console.error("UpdateProduct error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to update product." });
   }
 }

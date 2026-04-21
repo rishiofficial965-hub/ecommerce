@@ -5,10 +5,14 @@ import {
   getSellerProducts,
   getAllProducts,
   getProductDetails,
-  deleteProduct
+  deleteProduct,
+  updateProduct
 } from "../controllers/product.controller.js";
 import multer from "multer";
-import { createProductValidator } from "../validator/product.validation.js";
+import {
+  createProductValidator,
+  updateProductValidator,
+} from "../validator/product.validation.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -30,5 +34,11 @@ router.get("/seller", authenticateSeller, getSellerProducts);
 router.get("/", getAllProducts);
 router.get("/details/:id", getProductDetails);
 router.delete("/delete/:id", authenticateSeller, deleteProduct);
-
+router.post(
+  "/update/:id",
+  authenticateSeller,
+  upload.any(),
+  updateProductValidator,
+  updateProduct
+);
 export default router;

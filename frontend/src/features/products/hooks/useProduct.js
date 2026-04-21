@@ -3,7 +3,8 @@ import {
   getSellerProducts,
   getAllProducts,
   getProductDetails,
-  deleteProductApi
+  deleteProductApi,
+  updateProductApi,
 } from "../services/product.api";
 import { useDispatch } from "react-redux";
 import {
@@ -77,11 +78,24 @@ export const useProduct = () => {
     }
   }
 
+  async function handleUpdateProduct(id, data) {
+    try {
+      dispatch(setProductLoading(true));
+      const res = await updateProductApi(id, data);
+      return { success: true, data: res };
+    } catch (error) {
+      return { error: error.response?.data?.message || "Something went wrong" };
+    } finally {
+      dispatch(setProductLoading(false));
+    }
+  }
+
   return {
     handleCreateProduct,
     handleGetSellerProducts,
     handleGetAllProducts,
     handleGetProductDetails,
     handleDeleteProduct,
+    handleUpdateProduct,
   };
 };

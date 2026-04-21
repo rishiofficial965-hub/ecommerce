@@ -28,3 +28,8 @@ export async function deleteProductApi(id) {
   const response = await productApi.delete(`/delete/${id}`);
   return response.data;
 }
+
+export async function updateProductApi(id, data) {
+  const response = await productApi.post(`/update/${id}`, data);
+  return response.data;
+}

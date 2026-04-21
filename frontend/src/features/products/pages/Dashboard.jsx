@@ -7,7 +7,8 @@ import { FaBoxOpen, FaChartLine, FaPlus } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const { handleGetSellerProducts, handleDeleteProduct } = useProduct();
+  const { handleGetSellerProducts, handleDeleteProduct } =
+    useProduct();
   const sellerProducts = useSelector((state) => state.product.sellerProducts);
   const loading = useSelector((state) => state.product.loading);
   const user = useSelector((state) => state.auth.user);

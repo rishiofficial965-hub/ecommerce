@@ -133,7 +133,7 @@ const Home = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                onClick={() => navigate(`/product/${product._id}`)}
+                onClick={() => navigate(`/details/${product._id}`)}
                 key={product._id}
                 className="group cursor-pointer"
               >

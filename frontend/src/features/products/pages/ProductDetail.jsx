@@ -4,7 +4,16 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import Loader from "../../auth/components/Loader";
 import Nav from "../components/Nav";
-import { FaShoppingCart, FaHeart, FaChevronLeft, FaChevronRight, FaShieldAlt, FaTruck, FaUndo, FaArrowLeft } from "react-icons/fa";
+import {
+  FaShoppingCart,
+  FaHeart,
+  FaChevronLeft,
+  FaChevronRight,
+  FaShieldAlt,
+  FaTruck,
+  FaUndo,
+  FaArrowLeft,
+} from "react-icons/fa";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -17,7 +26,7 @@ import "swiper/css/pagination";
 import "swiper/css/effect-fade";
 
 const ProductDetail = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const { productId } = useParams();
   const { handleGetProductDetails } = useProduct();
   const loading = useSelector((state) => state.product.loading);
@@ -32,12 +41,15 @@ const ProductDetail = () => {
   }
 
   // Derived states for dynamic updates
-  const displayImages = (selectedVariant?.images && selectedVariant.images.length > 0)
-    ? selectedVariant.images 
-    : (product?.images || []);
-    
+  const displayImages =
+    selectedVariant?.images && selectedVariant.images.length > 0
+      ? selectedVariant.images
+      : product?.images || [];
+
   const displayPrice = selectedVariant?.price || product?.price;
-  const displayStock = selectedVariant ? selectedVariant.stock : (product?.stock || 0);
+  const displayStock = selectedVariant
+    ? selectedVariant.stock
+    : product?.stock || 0;
 
   useEffect(() => {
     getProductDetails();
@@ -55,9 +67,10 @@ const ProductDetail = () => {
             {product?.error ? "Error Loading Product" : "Product Not Found"}
           </h1>
           <p className="text-lacquered-licorice/60 mb-8 italic max-w-sm text-sm">
-            {product?.error || "The product you are looking for might have been removed or is unavailable."}
+            {product?.error ||
+              "The product you are looking for might have been removed or is unavailable."}
           </p>
-          <button 
+          <button
             onClick={() => navigate("/")}
             className="bg-copper-green text-albescent-white px-6 py-2.5 rounded-full font-black tracking-widest text-xs hover:bg-lacquered-licorice transition-all shadow-lg active:scale-95"
           >
@@ -74,20 +87,21 @@ const ProductDetail = () => {
 
       <main className="flex-1 container mx-auto max-w-6xl px-6 py-4 md:py-8">
         {/* Back Button */}
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-lacquered-licorice/60 hover:text-copper-green transition-colors group"
         >
           <div className="w-8 h-8 rounded-full border border-lacquered-licorice/10 flex items-center justify-center group-hover:bg-copper-green group-hover:text-albescent-white transition-all shadow-sm">
             <FaArrowLeft size={12} />
           </div>
-          <span className="font-black uppercase tracking-widest text-[10px]">Go Back</span>
+          <span className="font-black uppercase tracking-widest text-[10px]">
+            Go Back
+          </span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-          
           {/* Left: Product Images (Swiper) */}
-          <div className="space-y-4 animate-drop-bounce w-full max-w-lg mx-auto lg:mx-0">
+          <div className="space-y-4  w-full max-w-lg mx-auto lg:mx-0">
             <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-desert-khaki/10 border border-lacquered-licorice/5 shadow-xl group">
               <Swiper
                 modules={[Navigation, Pagination, Autoplay, EffectFade]}
@@ -99,7 +113,9 @@ const ProductDetail = () => {
                 pagination={{ clickable: true, dynamicBullets: true }}
                 autoplay={{ delay: 5000, disableOnInteraction: false }}
                 className="w-full h-full"
-                onSlideChange={(swiper) => setActiveImageIndex(swiper.activeIndex)}
+                onSlideChange={(swiper) =>
+                  setActiveImageIndex(swiper.activeIndex)
+                }
               >
                 {displayImages.map((image, index) => (
                   <SwiperSlide key={index}>
@@ -128,10 +144,16 @@ const ProductDetail = () => {
                   key={index}
                   onClick={() => setActiveImageIndex(index)}
                   className={`relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                    activeImageIndex === index ? "border-copper-green scale-105 shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+                    activeImageIndex === index
+                      ? "border-copper-green scale-105 shadow-md"
+                      : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={image.url} className="w-full h-full object-cover" alt="thumbnail" />
+                  <img
+                    src={image.url}
+                    className="w-full h-full object-cover"
+                    alt="thumbnail"
+                  />
                 </button>
               ))}
             </div>
@@ -161,10 +183,12 @@ const ProductDetail = () => {
               {displayPrice && (
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-black text-copper-green">
-                    {displayPrice.currency} {displayPrice.amount?.toLocaleString()}
+                    {displayPrice.currency}{" "}
+                    {displayPrice.amount?.toLocaleString()}
                   </span>
                   <span className="text-xs font-bold text-lacquered-licorice/30 line-through">
-                    {displayPrice.currency} {(displayPrice.amount * 1.25).toFixed(0)}
+                    {displayPrice.currency}{" "}
+                    {(displayPrice.amount * 1.25).toFixed(0)}
                   </span>
                 </div>
               )}
@@ -180,7 +204,9 @@ const ProductDetail = () => {
             {product.variants?.length > 0 && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Select Variant</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">
+                    Select Variant
+                  </h3>
                 </div>
                 <div className="flex flex-col gap-3">
                   {product.variants.map((variant, index) => (
@@ -195,26 +221,38 @@ const ProductDetail = () => {
                     >
                       <div className="flex flex-col items-start gap-1">
                         <div className="flex flex-wrap gap-2">
-                          {Object.entries(variant.attributes || {}).map(([key, value]) => (
-                            <span key={key} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                              selectedVariant === variant ? "bg-white/20" : "bg-lacquered-licorice/5"
-                            }`}>
-                              {key}: {value}
-                            </span>
-                          ))}
+                          {Object.entries(variant.attributes || {}).map(
+                            ([key, value]) => (
+                              <span
+                                key={key}
+                                className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                  selectedVariant === variant
+                                    ? "bg-white/20"
+                                    : "bg-lacquered-licorice/5"
+                                }`}
+                              >
+                                {key}: {value}
+                              </span>
+                            ),
+                          )}
                         </div>
                         {variant.stock <= 5 && variant.stock > 0 && (
-                          <span className={`${selectedVariant === variant ? "text-red-300" : "text-red-500"} text-[8px] font-black uppercase tracking-widest`}>
+                          <span
+                            className={`${selectedVariant === variant ? "text-red-300" : "text-red-500"} text-[8px] font-black uppercase tracking-widest`}
+                          >
                             Low Stock: {variant.stock} left
                           </span>
                         )}
                         {variant.stock === 0 && (
-                          <span className="text-red-600 text-[8px] font-black uppercase tracking-widest">Out of Stock</span>
+                          <span className="text-red-600 text-[8px] font-black uppercase tracking-widest">
+                            Out of Stock
+                          </span>
                         )}
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-sm font-black">
-                          {variant.price.currency} {variant.price.amount.toLocaleString()}
+                          {variant.price.currency}{" "}
+                          {variant.price.amount.toLocaleString()}
                         </span>
                       </div>
                     </button>
@@ -227,7 +265,9 @@ const ProductDetail = () => {
             {(!product.variants || product.variants.length === 0) && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">Size</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-lacquered-licorice">
+                    Size
+                  </h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {["S", "M", "L", "XL"].map((size) => (
@@ -246,11 +286,17 @@ const ProductDetail = () => {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button className="flex-1 group bg-copper-green text-albescent-white py-3.5 rounded-2xl font-black tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-lacquered-licorice transition-all duration-500 shadow-lg active:scale-95">
-                <FaShoppingCart size={14} className="group-hover:scale-110 transition-transform" />
+                <FaShoppingCart
+                  size={14}
+                  className="group-hover:scale-110 transition-transform"
+                />
                 ADD TO BAG
               </button>
               <button className="w-full sm:w-14 h-11 sm:h-auto rounded-2xl border-2 border-lacquered-licorice/10 flex items-center justify-center text-lacquered-licorice hover:bg-lacquered-licorice hover:text-albescent-white transition-all duration-300 group shadow-sm">
-                <FaHeart size={14} className="group-hover:scale-110 transition-transform" />
+                <FaHeart
+                  size={14}
+                  className="group-hover:scale-110 transition-transform"
+                />
               </button>
             </div>
 
@@ -258,15 +304,21 @@ const ProductDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-lacquered-licorice/5">
               <div className="flex flex-col items-center text-center gap-1.5">
                 <FaTruck className="text-copper-green text-lg" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">Free Shipping</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">
+                  Free Shipping
+                </span>
               </div>
               <div className="flex flex-col items-center text-center gap-1.5">
                 <FaUndo className="text-copper-green text-lg" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">7-Day Returns</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">
+                  7-Day Returns
+                </span>
               </div>
               <div className="flex flex-col items-center text-center gap-1.5">
                 <FaShieldAlt className="text-copper-green text-lg" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">Secure Payment</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-lacquered-licorice/60">
+                  Secure Payment
+                </span>
               </div>
             </div>
           </div>

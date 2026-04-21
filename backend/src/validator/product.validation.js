@@ -21,6 +21,36 @@ export const createProductValidator = [
   validateRequest,
 ];
 
+export const updateProductValidator = [
+  body("title").optional().notEmpty().withMessage("Title cannot be empty"),
+  body("description")
+    .optional()
+    .notEmpty()
+    .withMessage("Description cannot be empty"),
+  body("priceAmount")
+    .optional()
+    .notEmpty()
+    .withMessage("Price amount cannot be empty"),
+  body("priceCurrency")
+    .optional()
+    .notEmpty()
+    .withMessage("Price currency cannot be empty"),
+  body("variants")
+    .optional()
+    .custom((value) => {
+      try {
+        if (!value) return true;
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed))
+          throw new Error("Variants must be an array");
+        return true;
+      } catch (e) {
+        throw new Error("Invalid variants format");
+      }
+    }),
+  validateRequest,
+];
+
 export function validateRequest(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

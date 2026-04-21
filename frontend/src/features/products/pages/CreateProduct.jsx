@@ -192,50 +192,46 @@ const CreateProduct = () => {
   return (
     <>
     <Nav/>
-    <main className="min-h-screen py-12 px-4 flex items-center justify-center font-['Inter']">
-      <div className="max-w-4xl w-full bg-lacquered-licorice/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-playing-hooky/30">
+    <main className="min-h-screen py-8 px-4 flex items-center justify-center font-['Inter']">
+      <div className="max-w-3xl w-full bg-lacquered-licorice/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-playing-hooky/30">
         <div className="grid grid-cols-1 md:grid-cols-5 h-full">
           {/* Sidebar / Info Section */}
-          <div className="md:col-span-2 bg-copper-green p-8 text-albescent-white flex flex-col justify-between relative overflow-hidden">
+          <div className="md:col-span-2 bg-copper-green p-6 text-albescent-white flex flex-col justify-between relative overflow-hidden">
             <div className="relative z-10">
-              <LuPackagePlus size={48} className="mb-6 opacity-80" />
-              <h1 className="text-4xl font-bold mb-4 tracking-tight">
-                Create New Product
+              <LuPackagePlus size={36} className="mb-4 opacity-80" />
+              <h1 className="text-2xl font-bold mb-3 tracking-tight">
+                Create Product
               </h1>
-              <p className="text-playing-hooky text-lg leading-relaxed mix-blend-screen opacity-90">
+              <p className="text-playing-hooky text-sm leading-relaxed mix-blend-screen opacity-90">
                 Showcase your items to the world. Fill in the details to list
                 your property or product on Snitch.
               </p>
             </div>
 
-            <div className="mt-12 space-y-4 relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-desert-khaki animate-pulse" />
-                <span className="text-sm opacity-70">Rich Media Support</span>
+            <div className="mt-8 space-y-3 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-desert-khaki animate-pulse" />
+                <span className="text-xs opacity-70">Rich Media Support</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-desert-khaki animate-pulse" />
-                <span className="text-sm opacity-70">
-                  Global Currency Support
-                </span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-desert-khaki animate-pulse" />
+                <span className="text-xs opacity-70">Global Currency</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-desert-khaki animate-pulse" />
-                <span className="text-sm opacity-70">
-                  SEO Optimized Listings
-                </span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-desert-khaki animate-pulse" />
+                <span className="text-xs opacity-70">SEO Optimized</span>
               </div>
             </div>
 
             {/* Decorative background element */}
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-playing-hooky/20 rounded-full blur-3xl animate-soft-rotate" />
+            <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-playing-hooky/20 rounded-full blur-3xl animate-soft-rotate" />
           </div>
 
           {/* Form Section */}
-          <div className="md:col-span-3 p-8 md:p-12">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="md:col-span-3 p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-albescent-white text-sm font-medium mb-2 ml-1">
+                <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
                   Product Title
                 </label>
                 <input
@@ -244,13 +240,13 @@ const CreateProduct = () => {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="e.g. Vintage Leather Jacket"
-                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-3 text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
+                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-albescent-white text-sm font-medium mb-2 ml-1">
+                <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
                   Description
                 </label>
                 <textarea
@@ -258,15 +254,15 @@ const CreateProduct = () => {
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Tell us about your product..."
-                  rows="4"
-                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-3 text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all resize-none"
+                  rows="3"
+                  className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all resize-none"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-albescent-white text-sm font-medium mb-2 ml-1">
+                  <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
                     Price
                   </label>
                   <input
@@ -275,19 +271,19 @@ const CreateProduct = () => {
                     value={formData.priceAmount}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-3 text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
+                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white placeholder:text-playing-hooky/60 focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-albescent-white text-sm font-medium mb-2 ml-1">
+                  <label className="block text-albescent-white text-xs font-medium mb-1.5 ml-1">
                     Currency
                   </label>
                   <select
                     name="priceCurrency"
                     value={formData.priceCurrency}
                     onChange={handleChange}
-                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-3 text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all cursor-pointer"
+                    className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-sm text-albescent-white focus:outline-none focus:ring-2 focus:ring-copper-green focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
@@ -298,15 +294,15 @@ const CreateProduct = () => {
               </div>
 
               <div>
-                <label className="block text-albescent-white text-sm font-medium mb-2 ml-1">
+                <label className="block text-albescent-white text-xs font-medium mb-2 ml-1">
                   Product Images
                 </label>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
                     {imagePreviews.map((url, index) => (
                       <div
                         key={index}
-                        className="relative w-20 h-20 rounded-lg overflow-hidden border border-playing-hooky/30 group"
+                        className="relative w-14 h-14 rounded-lg overflow-hidden border border-playing-hooky/30 group"
                       >
                         <img
                           src={url}
@@ -318,13 +314,13 @@ const CreateProduct = () => {
                           onClick={() => removeImage(index)}
                           className="absolute inset-0 bg-lacquered-licorice/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <LuX className="text-white" size={20} />
+                          <LuX className="text-white" size={16} />
                         </button>
                       </div>
                     ))}
-                    <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-playing-hooky/40 rounded-lg cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky hover:text-copper-green">
-                      <LuImagePlus size={24} />
-                      <span className="text-[10px] mt-1 font-semibold uppercase tracking-wider">
+                    <label className="w-14 h-14 flex flex-col items-center justify-center border-2 border-dashed border-playing-hooky/40 rounded-lg cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky hover:text-copper-green">
+                      <LuImagePlus size={20} />
+                      <span className="text-[8px] mt-0.5 font-semibold uppercase tracking-wider">
                         Add
                       </span>
                       <input
@@ -340,42 +336,42 @@ const CreateProduct = () => {
               </div>
 
               {/* Variants Section */}
-              <div className="space-y-6 pt-6 border-t border-playing-hooky/20">
+              <div className="space-y-4 pt-4 border-t border-playing-hooky/20">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-albescent-white flex items-center gap-2">
-                    <LuLayers className="text-copper-green" size={24} />
-                    Product Variants
+                  <h3 className="text-lg font-bold text-albescent-white flex items-center gap-2">
+                    <LuLayers className="text-copper-green" size={20} />
+                    Variants
                   </h3>
                   <button
                     type="button"
                     onClick={addVariant}
-                    className="flex items-center gap-2 text-sm font-semibold text-albescent-white hover:text-copper-green transition-colors bg-copper-green/10 px-4 py-2 rounded-lg"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-albescent-white hover:text-copper-green transition-colors bg-copper-green/10 px-3 py-1.5 rounded-lg"
                   >
-                    <LuPlus size={18} />
-                    Add Variant
+                    <LuPlus size={14} />
+                    Add
                   </button>
                 </div>
 
                 {variants.map((variant, vIndex) => (
                   <div
                     key={vIndex}
-                    className="bg-lacquered-licorice/50 border border-playing-hooky/30 rounded-2xl p-6 space-y-6 relative group"
+                    className="bg-lacquered-licorice/50 border border-playing-hooky/30 rounded-xl p-4 space-y-4 relative group"
                   >
                     <button
                       type="button"
                       onClick={() => removeVariant(vIndex)}
-                      className="absolute top-4 right-4 text-playing-hooky hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      className="absolute top-3 right-3 text-playing-hooky hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                     >
-                      <LuTrash2 size={20} />
+                      <LuTrash2 size={16} />
                     </button>
 
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-playing-hooky">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-playing-hooky">
                       Variant #{vIndex + 1}
                     </h4>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-albescent-white text-xs font-medium mb-1 ml-1">
+                        <label className="block text-albescent-white text-[10px] font-medium mb-1 ml-1">
                           Price
                         </label>
                         <input
@@ -384,11 +380,11 @@ const CreateProduct = () => {
                           value={variant.priceAmount}
                           onChange={(e) => handleVariantChange(vIndex, e)}
                           placeholder="Variant Price"
-                          className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-2 text-albescent-white text-sm focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
+                          className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-1.5 text-albescent-white text-xs focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-albescent-white text-xs font-medium mb-1 ml-1">
+                        <label className="block text-albescent-white text-[10px] font-medium mb-1 ml-1">
                           Stock
                         </label>
                         <input
@@ -396,19 +392,19 @@ const CreateProduct = () => {
                           name="stock"
                           value={variant.stock}
                           onChange={(e) => handleVariantChange(vIndex, e)}
-                          placeholder="Stock Quantity"
-                          className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-xl px-4 py-2 text-albescent-white text-sm focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
+                          placeholder="Stock"
+                          className="w-full bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-1.5 text-albescent-white text-xs focus:outline-none focus:ring-2 focus:ring-copper-green transition-all"
                         />
                       </div>
                     </div>
 
                     {/* Attributes */}
-                    <div className="space-y-3">
-                      <label className="block text-albescent-white text-xs font-medium ml-1">
+                    <div className="space-y-2">
+                      <label className="block text-albescent-white text-[10px] font-medium ml-1">
                         Attributes (e.g. Color: Red)
                       </label>
                       {variant.attributes.map((attr, aIndex) => (
-                        <div key={aIndex} className="flex gap-2">
+                        <div key={aIndex} className="flex gap-1.5">
                           <input
                             type="text"
                             placeholder="Key"
@@ -421,7 +417,7 @@ const CreateProduct = () => {
                                 e.target.value,
                               )
                             }
-                            className="flex-1 bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-albescent-white text-xs focus:outline-none focus:ring-1 focus:ring-copper-green"
+                            className="flex-1 bg-lacquered-licorice border border-playing-hooky/40 rounded-md px-2 py-1.5 text-albescent-white text-[10px] focus:outline-none focus:ring-1 focus:ring-copper-green"
                           />
                           <input
                             type="text"
@@ -435,36 +431,36 @@ const CreateProduct = () => {
                                 e.target.value,
                               )
                             }
-                            className="flex-1 bg-lacquered-licorice border border-playing-hooky/40 rounded-lg px-3 py-2 text-albescent-white text-xs focus:outline-none focus:ring-1 focus:ring-copper-green"
+                            className="flex-1 bg-lacquered-licorice border border-playing-hooky/40 rounded-md px-2 py-1.5 text-albescent-white text-[10px] focus:outline-none focus:ring-1 focus:ring-copper-green"
                           />
                           <button
                             type="button"
                             onClick={() => removeAttribute(vIndex, aIndex)}
-                            className="text-playing-hooky hover:text-red-400 p-2"
+                            className="text-playing-hooky hover:text-red-400 p-1"
                           >
-                            <LuTrash2 size={16} />
+                            <LuTrash2 size={14} />
                           </button>
                         </div>
                       ))}
                       <button
                         type="button"
                         onClick={() => addAttribute(vIndex)}
-                        className="text-[10px] uppercase tracking-wider font-bold text-copper-green hover:underline flex items-center gap-1"
+                        className="text-[9px] uppercase tracking-wider font-bold text-copper-green hover:underline flex items-center gap-1"
                       >
-                        <LuPlus size={12} /> Add Attribute
+                        <LuPlus size={10} /> Add Attribute
                       </button>
                     </div>
 
                     {/* Variant Images */}
                     <div>
-                      <label className="block text-albescent-white text-xs font-medium mb-2 ml-1">
+                      <label className="block text-albescent-white text-[10px] font-medium mb-1.5 ml-1">
                         Variant Images
                       </label>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {variant.imagePreviews.map((url, i) => (
                           <div
                             key={i}
-                            className="relative w-16 h-16 rounded-lg overflow-hidden border border-playing-hooky/30 group/img"
+                            className="relative w-12 h-12 rounded-lg overflow-hidden border border-playing-hooky/30 group/img"
                           >
                             <img
                               src={url}
@@ -476,12 +472,12 @@ const CreateProduct = () => {
                               onClick={() => removeVariantImage(vIndex, i)}
                               className="absolute inset-0 bg-lacquered-licorice/60 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
                             >
-                              <LuX size={16} className="text-white" />
+                              <LuX size={14} className="text-white" />
                             </button>
                           </div>
                         ))}
-                        <label className="w-16 h-16 flex flex-col items-center justify-center border-2 border-dashed border-playing-hooky/40 rounded-lg cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky hover:text-copper-green">
-                          <LuImagePlus size={20} />
+                        <label className="w-12 h-12 flex flex-col items-center justify-center border-2 border-dashed border-playing-hooky/40 rounded-lg cursor-pointer hover:border-copper-green hover:bg-copper-green/10 transition-all text-playing-hooky hover:text-copper-green">
+                          <LuImagePlus size={16} />
                           <input
                             type="file"
                             multiple
@@ -498,11 +494,11 @@ const CreateProduct = () => {
 
               <button
                 type="submit"
-                className="w-full bg-copper-green text-albescent-white font-bold py-4 rounded-xl shadow-lg hover:bg-copper-green/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full bg-copper-green text-albescent-white font-bold py-3 rounded-xl shadow-lg hover:bg-copper-green/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 Create Listing
                 <LuPackagePlus
-                  size={20}
+                  size={18}
                   className="group-hover:translate-x-1 transition-transform"
                 />
               </button>
