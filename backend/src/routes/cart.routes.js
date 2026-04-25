@@ -4,6 +4,7 @@ import {
   getCart,
   removeFromCart,
   updateQuantity,
+  createPaymentOrder
 } from "../controllers/cart.controller.js";
 import {
   validateAddToCart,
@@ -38,5 +39,5 @@ router.delete(
   validateRemoveFromCart,
   removeFromCart,
 );
-
+router.post("/payment/create-order", protect, createPaymentOrder);
 export default router;

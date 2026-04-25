@@ -31,3 +31,11 @@ export async function removeItemFromCart({ productId, varientId }) {
   );
   return response.data;
 }
+
+export const createOrderApi = async (amount, currency) => {
+  const response = await cartApiInstance.post("/payment/create-order", {
+    amount,
+    currency,
+  });
+  return response.data;
+};

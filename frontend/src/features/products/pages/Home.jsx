@@ -37,8 +37,8 @@ const Home = () => {
       navigate("/login");
       return;
     }
-    const firstVariantId = product.variants?.[0]?._id;
-    if (!firstVariantId) {
+    const firstVariantId = product?.variants?.[0]?._id;
+    if (!firstVariantId || !product) {
       toast.error("This product is currently unavailable.");
       return;
     }

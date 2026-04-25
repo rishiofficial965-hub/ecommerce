@@ -5,6 +5,7 @@ import {
   addProductToCart,
   updateItemQuantity,
   removeItemFromCart,
+  createOrderApi,
 } from "../services/cart.api";
 
 export const useCart = () => {
@@ -20,7 +21,10 @@ export const useCart = () => {
       return { success: true, cart: data.cart };
     } catch (error) {
       // BUG FIX: was silently swallowing the error — now surfaces it via Redux
-      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
       dispatch(setCart(null));
       dispatch(setError(msg));
       return { success: false, error: msg };
@@ -53,7 +57,10 @@ export const useCart = () => {
       dispatch(setCart(data.cart));
       return { success: true, cart: data.cart };
     } catch (error) {
-      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
       dispatch(setError(msg));
       return { success: false, error: msg };
     } finally {
@@ -69,11 +76,27 @@ export const useCart = () => {
       dispatch(setCart(data.cart));
       return { success: true, cart: data.cart };
     } catch (error) {
-      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
       dispatch(setError(msg));
       return { success: false, error: msg };
     } finally {
       dispatch(setLoading(false));
+    }
+  };
+
+  const handleCreateOrder = async () => {
+    try {
+      const data = await createOrderApi(cart.totalAmount, "INR");
+      return { success: true, order: data.order };
+    } catch (error) {
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
+      return { success: false, error: msg };
     }
   };
 
@@ -85,5 +108,6 @@ export const useCart = () => {
     handleAddToCart,
     handleUpdateQuantity,
     handleRemoveFromCart,
+    handleCreateOrder,
   };
 };

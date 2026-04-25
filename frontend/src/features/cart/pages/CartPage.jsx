@@ -6,12 +6,14 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import Loader from "../../auth/components/Loader";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRazorpay } from "react-razorpay";
 
 const FREE_SHIPPING_THRESHOLD = 999;
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { cart, loading, handleGetCart, handleUpdateQuantity, handleRemoveFromCart } = useCart();
+  const { error, isLoading, Razorpay } = useRazorpay();
+  const { cart, loading, handleGetCart, handleUpdateQuantity, handleRemoveFromCart ,handleCreateOrder} = useCart();
   const { user } = useSelector((state) => state.auth);
   const [promoOpen, setPromoOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
@@ -22,6 +24,37 @@ const CartPage = () => {
       handleGetCart();
     }
   }, [user]);
+   const handlePayment = async () => {
+    if(!cart) return;
+    const res = await handleCreateOrder();
+    if(!res.success){
+      return;
+    }
+    const order = res.order;
+    const options = {
+      key: "rzp_test_ShNSkpxt3emQVJ",
+      amount: order.amount, 
+      currency: order.currency,
+      name: "Snitch",
+      description: "Test Transaction",
+      order_id: order.id, 
+      handler: (response) => {
+        console.log(response);
+        alert("Payment Successful!");
+      },
+      prefill: {
+        name: user.fullname,
+        email: user.email,
+        contact: user.contact,
+      },
+      theme: { 
+        color: "#F37254",
+      },
+    };
+
+    const razorpayInstance = new Razorpay(options);
+    razorpayInstance.open();
+  }
 
   if (loading) return <Loader />;
 
@@ -212,7 +245,8 @@ const CartPage = () => {
               </div>
 
               <div className="space-y-4 relative z-10">
-                <button className="w-full bg-copper-green text-albescent-white py-5 rounded-2xl font-black tracking-[0.2em] text-[11px] hover:bg-albescent-white hover:text-lacquered-licorice transition-all duration-700 shadow-lg hover:shadow-copper-green/20 active:scale-95 flex items-center justify-center gap-3 uppercase group/btn">
+                <button onClick={handlePayment}
+                className="w-full bg-copper-green text-albescent-white py-5 rounded-2xl font-black tracking-[0.2em] text-[11px] hover:bg-albescent-white hover:text-lacquered-licorice transition-all duration-700 shadow-lg hover:shadow-copper-green/20 active:scale-95 flex items-center justify-center gap-3 uppercase group/btn">
                   SECURE CHECKOUT
                   <FaArrowLeft className="rotate-180 group-hover/btn:translate-x-1 transition-transform" />
                 </button>

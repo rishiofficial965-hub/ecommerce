@@ -56,7 +56,7 @@ const ProductDetail = () => {
     setAdding(true);
     const res = await handleAddToCart({
       productId: product._id,
-      varientId: selectedVariant?._id || product.variants[0]._id,
+      varientId: selectedVariant?._id || product.variants?.[0]?._id,
       quantity: qty,
     });
     setAdding(false);

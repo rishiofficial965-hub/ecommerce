@@ -1,5 +1,6 @@
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
+import { createOrder } from "../services/payment.service.js";
 
 // ─── Shared helper ────────────────────────────────────────────────────────────
 /**
@@ -7,15 +8,42 @@ import productModel from "../model/product.model.js";
  * and return the enriched cart object safe for the response.
  */
 function buildCartResponse(populatedCart) {
-  const totalAmount = populatedCart.items.reduce(
+  // Map items to include their LIVE price from the product variants
+  const itemsWithLivePrice = populatedCart.items.map((item) => {
+    const cartItem = item.toObject ? item.toObject() : item;
+
+    // If product is not populated, fallback to stored snapshot
+    if (!item.product) return cartItem;
+
+    // 1. Try to find the specific variant price
+    const currentVariant = item.product.variants?.find(
+      (v) => v._id.toString() === item.variant?.toString(),
+    );
+
+    // 2. Determine the live price: Variant Price > Base Product Price > Stored Snapshot
+    const livePrice =
+      currentVariant?.price || item.product.price || cartItem.price;
+
+    return {
+      ...cartItem,
+      price: livePrice,
+    };
+  });
+
+  const totalAmount = itemsWithLivePrice.reduce(
     (total, item) => total + item.price.amount * item.quantity,
     0,
   );
-  const totalItems = populatedCart.items.reduce(
+  const totalItems = itemsWithLivePrice.reduce(
     (total, item) => total + item.quantity,
     0,
   );
-  return { ...populatedCart.toObject(), totalAmount, totalItems };
+  return {
+    ...populatedCart.toObject(),
+    items: itemsWithLivePrice,
+    totalAmount,
+    totalItems,
+  };
 }
 
 // ─── Add to Cart ──────────────────────────────────────────────────────────────
@@ -76,9 +104,7 @@ export const addToCart = async (req, res) => {
     } else {
       // BUG FIX: fallback to "" to satisfy the `required: true` image field in cart model
       const image =
-        selectedVariant.images?.[0]?.url ||
-        product.images?.[0]?.url ||
-        "";
+        selectedVariant.images?.[0]?.url || product.images?.[0]?.url || "";
 
       cart.items.push({
         product: productId,
@@ -143,9 +169,7 @@ export const updateQuantity = async (req, res) => {
 
     const cart = await cartModel.findOne({ user: req.user._id });
     if (!cart) {
-      return res
-        .status(404)
-        .json({ error: "Cart not found", success: false });
+      return res.status(404).json({ error: "Cart not found", success: false });
     }
 
     // quantity ≤ 0 → treat as remove
@@ -218,9 +242,7 @@ export const removeFromCart = async (req, res) => {
 
     const cart = await cartModel.findOne({ user: req.user._id });
     if (!cart) {
-      return res
-        .status(404)
-        .json({ error: "Cart not found", success: false });
+      return res.status(404).json({ error: "Cart not found", success: false });
     }
 
     const prevLength = cart.items.length;
@@ -252,5 +274,15 @@ export const removeFromCart = async (req, res) => {
   } catch (error) {
     console.error("RemoveFromCart error:", error);
     return res.status(500).json({ error: error.message, success: false });
+  }
+};
+
+export const createPaymentOrder = async (req, res) => {
+  try {
+    const { amount, currency } = req.body;
+    const order = await createOrder({ amount, currency });
+    res.status(201).json({ success: true, order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
