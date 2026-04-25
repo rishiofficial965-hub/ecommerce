@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import Loader from "../../auth/components/Loader";
+import { useToast } from "../../common/Toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRazorpay } from "react-razorpay";
 
@@ -13,8 +14,9 @@ const FREE_SHIPPING_THRESHOLD = 999;
 const CartPage = () => {
   const navigate = useNavigate();
   const { error, isLoading, Razorpay } = useRazorpay();
-  const { cart, loading, handleGetCart, handleUpdateQuantity, handleRemoveFromCart ,handleCreateOrder} = useCart();
+  const { cart, loading, handleGetCart, handleUpdateQuantity, handleRemoveFromCart ,handleCreateOrder, handleVerifyPayment} = useCart();
   const { user } = useSelector((state) => state.auth);
+  const toast = useToast();
   const [promoOpen, setPromoOpen] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
@@ -38,9 +40,19 @@ const CartPage = () => {
       name: "Snitch",
       description: "Test Transaction",
       order_id: order.id, 
-      handler: (response) => {
-        console.log(response);
-        alert("Payment Successful!");
+      handler: async (response) => {
+        const verifyRes = await handleVerifyPayment({
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+        });
+
+        if (verifyRes.success) {
+          toast.success("Payment successful! Your order has been placed.");
+          navigate("/");
+        } else {
+          toast.error(verifyRes.error || "Payment verification failed.");
+        }
       },
       prefill: {
         name: user.fullname,

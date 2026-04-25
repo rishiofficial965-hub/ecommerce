@@ -39,3 +39,8 @@ export const createOrderApi = async (amount, currency) => {
   });
   return response.data;
 };
+
+export const verifyPaymentApi = async (paymentData) => {
+  const response = await cartApiInstance.post("/payment/verify", paymentData);
+  return response.data;
+};

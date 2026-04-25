@@ -1,7 +1,7 @@
 import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
-import { createOrder } from "../services/payment.service.js";
-
+import { createOrder, verifySignature } from "../services/payment.service.js";
+import paymentModel from "../model/payment.model.js";
 // ─── Shared helper ────────────────────────────────────────────────────────────
 /**
  * Build the summary fields (totalAmount, totalItems) from a populated cart
@@ -280,9 +280,91 @@ export const removeFromCart = async (req, res) => {
 export const createPaymentOrder = async (req, res) => {
   try {
     const { amount, currency } = req.body;
+    const user = req.user;
+
+    // 1. Get user's cart to save as items
+    const cart = await cartModel.findOne({ user: user._id });
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ success: false, message: "Cart is empty" });
+    }
+
+    // 2. Create Razorpay Order
     const order = await createOrder({ amount, currency });
-    res.status(201).json({ success: true, order });
+
+    // 3. Create/Update pending payment record (Idempotency)
+    // We use findOneAndUpdate to ensure we don't create multiple pending payments for the same order if user retries
+    await paymentModel.findOneAndUpdate(
+      { "razorpay.order_id": order.id },
+      {
+        user: user._id,
+        orderItems: cart.items.map((item) => item._id), // or item.product if you prefer ref
+        price: { amount, currency },
+        status: "pending",
+        email: user.email,
+        phone: user.contact,
+        razorpay: { order_id: order.id },
+      },
+      { upsert: true, new: true },
+    );
+
+    return res.status(201).json({ success: true, order });
   } catch (error) {
+    console.error("CreatePaymentOrder error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+      req.body;
+
+    // 1. Verify Signature
+    const isAuthentic = verifySignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    );
+
+    if (!isAuthentic) {
+      // Mark payment as failed if we find the record
+      await paymentModel.findOneAndUpdate(
+        { "razorpay.order_id": razorpay_order_id },
+        { status: "failed" },
+      );
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
+    }
+
+    // 2. Update Payment Record
+    const payment = await paymentModel.findOneAndUpdate(
+      { "razorpay.order_id": razorpay_order_id },
+      {
+        status: "paid",
+        "razorpay.payment_id": razorpay_payment_id,
+        "razorpay.signature": razorpay_signature,
+        payment_id: razorpay_payment_id,
+      },
+      { new: true },
+    );
+
+    if (!payment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Payment record not found" });
+    }
+
+    // 3. Clear the User's Cart
+    await cartModel.findOneAndUpdate({ user: req.user._id }, { items: [] });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified and cart cleared",
+      payment,
+    });
+  } catch (error) {
+    console.error("VerifyPayment error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -6,6 +6,7 @@ import {
   updateItemQuantity,
   removeItemFromCart,
   createOrderApi,
+  verifyPaymentApi,
 } from "../services/cart.api";
 
 export const useCart = () => {
@@ -100,6 +101,24 @@ export const useCart = () => {
     }
   };
 
+  const handleVerifyPayment = async (paymentData) => {
+    try {
+      dispatch(setLoading(true));
+      const data = await verifyPaymentApi(paymentData);
+      // Refresh cart after payment (it should be empty now)
+      handleGetCart();
+      return { success: true, data };
+    } catch (error) {
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message;
+      return { success: false, error: msg };
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
   return {
     cart,
     loading,
@@ -109,5 +128,6 @@ export const useCart = () => {
     handleUpdateQuantity,
     handleRemoveFromCart,
     handleCreateOrder,
+    handleVerifyPayment,
   };
 };
