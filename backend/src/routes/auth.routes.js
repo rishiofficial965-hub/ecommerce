@@ -17,6 +17,7 @@ import {
 } from "../controllers/auth.controller.js";
 import passport from "passport";
 import { protect } from "../middleware/auth.middleware.js";
+import { Config } from "../config/env.js";
 
 const router = Router();
 
