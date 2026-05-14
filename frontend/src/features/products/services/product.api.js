@@ -15,8 +15,12 @@ export const getSellerProducts = async () => {
   return response.data;
 };
 
-export const getAllProducts = async () => {
-  const response = await productApi.get("/");
+export const getAllProducts = async ({ q, category, gender } = {}) => {
+  const params = {};
+  if (q) params.q = q;
+  if (category && category !== "All") params.category = category;
+  if (gender && gender !== "All") params.gender = gender;
+  const response = await productApi.get("/", { params });
   return response.data;
 };
 export const getProductDetails = async (id) => {

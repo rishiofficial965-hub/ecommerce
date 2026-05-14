@@ -69,4 +69,9 @@ export async function logoutApi() {
   return response.data;
 }
 
+export async function updateProfileApi({ fullname, contact }) {
+  const response = await authApiInstance.patch("/profile", { fullname, contact });
+  return response.data;
+}
+
 

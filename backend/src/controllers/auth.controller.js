@@ -432,3 +432,38 @@ export async function logoutHandler(req, res) {
   });
   return res.status(200).json({ success: true, message: "Logged out successfully" });
 }
+
+export async function updateProfile(req, res) {
+  try {
+    const { fullname, contact } = req.body;
+    const user = await userModel.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    if (fullname !== undefined) user.fullname = fullname;
+    if (contact !== undefined) {
+      // Check uniqueness
+      const existing = await userModel.findOne({ contact, _id: { $ne: user._id } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: "Contact number already in use" });
+      }
+      user.contact = contact;
+    }
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        contact: user.contact,
+        fullname: user.fullname,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (err) {
+    console.error("UpdateProfile error:", err);
+    return res.status(500).json({ success: false, message: "Failed to update profile." });
+  }
+}

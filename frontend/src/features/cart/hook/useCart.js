@@ -7,6 +7,7 @@ import {
   removeItemFromCart,
   createOrderApi,
   verifyPaymentApi,
+  fetchMyOrders,
 } from "../services/cart.api";
 
 export const useCart = () => {
@@ -119,6 +120,17 @@ export const useCart = () => {
     }
   };
 
+  const handleGetMyOrders = async () => {
+    try {
+      const data = await fetchMyOrders();
+      return { success: true, orders: data.orders };
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || error.message;
+      return { success: false, error: msg };
+    }
+  };
+
   return {
     cart,
     loading,
@@ -129,5 +141,6 @@ export const useCart = () => {
     handleRemoveFromCart,
     handleCreateOrder,
     handleVerifyPayment,
+    handleGetMyOrders,
   };
 };

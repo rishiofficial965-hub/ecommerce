@@ -3,6 +3,7 @@ import LoginForm from "../features/auth/pages/LoginForm.jsx";
 import RegistrationForm from "../features/auth/pages/RegistrationForm.jsx";
 import VerifyOTPPage from "../features/auth/pages/VerifyOTPPage.jsx";
 import ForgetPassword from "../features/auth/pages/ForgetPassword.jsx";
+import ProfilePage from "../features/auth/pages/ProfilePage.jsx";
 import CreateProduct from "../features/products/pages/CreateProduct.jsx";
 import Dashboard from "../features/products/pages/Dashboard.jsx";
 import Protected from "../features/products/components/Protected.jsx";
@@ -10,6 +11,8 @@ import Home from "../features/products/pages/Home.jsx";
 import ProductDetail from "../features/products/pages/ProductDetail.jsx";
 import SellerProductDetails from "../features/products/pages/SellerProductDetails.jsx";
 import CartPage from "../features/cart/pages/CartPage.jsx";
+import OrdersPage from "../features/cart/pages/OrdersPage.jsx";
+import NotFound from "../features/common/NotFound.jsx";
 
 
 export const routes = createBrowserRouter([
@@ -22,6 +25,22 @@ export const routes = createBrowserRouter([
     element: (
       <Protected role="buyer">
         <CartPage />
+      </Protected>
+    ),
+  },
+  {
+    path: "/orders",
+    element: (
+      <Protected role="buyer">
+        <OrdersPage />
+      </Protected>
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <Protected role="any">
+        <ProfilePage />
       </Protected>
     ),
   },
@@ -74,4 +93,9 @@ export const routes = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
 ]);
+

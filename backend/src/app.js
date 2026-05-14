@@ -8,9 +8,20 @@ import cors from "cors";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Config } from "./config/env.js";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 
 const app = express();
 
+app.use(helmet());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests, please try again later.",
+});
+
+app.use(limiter);
 app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));

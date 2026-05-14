@@ -13,6 +13,7 @@ import {
   verifyResetOtp,
   getMe,
   logoutHandler,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 import passport from "passport";
 import { protect } from "../middleware/auth.middleware.js";
@@ -47,6 +48,7 @@ router.post("/verify-reset-otp", verifyResetOtp);
 
 router.get("/get-Me", protect, getMe);
 router.post("/logout", logoutHandler);
+router.patch("/profile", protect, updateProfile);
 
 
 export default router;

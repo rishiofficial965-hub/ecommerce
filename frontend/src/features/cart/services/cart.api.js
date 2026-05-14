@@ -44,3 +44,8 @@ export const verifyPaymentApi = async (paymentData) => {
   const response = await cartApiInstance.post("/payment/verify", paymentData);
   return response.data;
 };
+
+export const fetchMyOrders = async () => {
+  const response = await cartApiInstance.get("/orders");
+  return response.data;
+};

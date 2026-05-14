@@ -24,6 +24,17 @@ const paymentSchema = new mongoose.Schema(
       payment_id: { type: String },
       order_id: { type: String, required: true },
     },
+    orderSnapshot: [
+      {
+        title: { type: String },
+        image: { type: String },
+        quantity: { type: Number },
+        price: {
+          amount: { type: Number },
+          currency: { type: String },
+        },
+      },
+    ],
   },
   { timestamps: true },
 );

@@ -16,6 +16,7 @@ import {
   verifyResetOtp,
   getMe,
   logoutApi,
+  updateProfileApi,
 } from "../services/auth.api.js";
 
 export const useAuth = () => {
@@ -188,6 +189,23 @@ export const useAuth = () => {
     }
   }
 
+  async function handleUpdateProfile({ fullname, contact }) {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+      const data = await updateProfileApi({ fullname, contact });
+      dispatch(setUser(data.user));
+      return { success: true, user: data.user };
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || error.message || "Failed to update profile";
+      dispatch(setError(msg));
+      return { success: false, error: msg };
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+
   
 
   return {
@@ -199,6 +217,7 @@ export const useAuth = () => {
     handleForgetPassword,
     handleResetPasswordOtp,
     handleLogout,
+    handleUpdateProfile,
     loading,
     pendingUserId,
   };

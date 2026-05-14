@@ -8,7 +8,8 @@ const Protected = ({ children, role }) => {
   if (loading) return <Loader />;
   if (!user) return <Navigate to="/login" />;
 
-  if (role && user.role !== role) {
+
+  if (role && role !== "any" && user.role !== role) {
     return <Navigate to="/" />;
   }
 

@@ -109,12 +109,37 @@ export async function getSellerProducts(req, res) {
   }
 }
 
-// ─── Get All Products ─────────────────────────────────────────────────────────
+// ─── Get All Products (with search & filters) ─────────────────────────────────
 export async function getAllProducts(req, res) {
   try {
+    const { q, category, gender } = req.query;
+
+    const filter = {};
+
+    // Full-text search across title, brand, category, description
+    if (q && q.trim()) {
+      const regex = new RegExp(q.trim(), "i");
+      filter.$or = [
+        { title: regex },
+        { brand: regex },
+        { category: regex },
+        { description: regex },
+      ];
+    }
+
+    if (category && category !== "All") {
+      filter.category = new RegExp(`^${category.trim()}$`, "i");
+    }
+
+    if (gender && gender !== "All") {
+      filter.gender = gender.trim();
+    }
+
     const products = await productModel
-      .find()
+      .find(filter)
+      .sort({ createdAt: -1 })
       .populate("Seller", "fullname email contact");
+
     return res.status(200).json({ success: true, products });
   } catch (err) {
     console.error("GetAllProducts error:", err);

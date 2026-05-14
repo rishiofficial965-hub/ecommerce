@@ -2,11 +2,10 @@ import cartModel from "../model/cart.model.js";
 import productModel from "../model/product.model.js";
 import { createOrder, verifySignature } from "../services/payment.service.js";
 import paymentModel from "../model/payment.model.js";
-// ─── Shared helper ────────────────────────────────────────────────────────────
-/**
- * Build the summary fields (totalAmount, totalItems) from a populated cart
- * and return the enriched cart object safe for the response.
- */
+import userModel from "../model/user.model.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { orderConfirmationTemplate } from "../utils/orderConfirmationTemplate.js";
+
 function buildCartResponse(populatedCart) {
   // Map items to include their LIVE price from the product variants
   const itemsWithLivePrice = populatedCart.items.map((item) => {
@@ -327,7 +326,6 @@ export const verifyPayment = async (req, res) => {
     );
 
     if (!isAuthentic) {
-      // Mark payment as failed if we find the record
       await paymentModel.findOneAndUpdate(
         { "razorpay.order_id": razorpay_order_id },
         { status: "failed" },
@@ -337,7 +335,22 @@ export const verifyPayment = async (req, res) => {
         .json({ success: false, message: "Invalid signature" });
     }
 
-    // 2. Update Payment Record
+    // 2. Fetch cart BEFORE clearing (we need items for stock decrement + email)
+    const cart = await cartModel.findOne({ user: req.user._id }).populate("items.product");
+
+    // 3. Decrement stock for each variant purchased
+    if (cart && cart.items.length > 0) {
+      const stockOps = cart.items.map((item) => {
+        if (!item.product) return null;
+        return productModel.updateOne(
+          { _id: item.product._id, "variants._id": item.variant },
+          { $inc: { "variants.$.stock": -item.quantity } }
+        );
+      }).filter(Boolean);
+      await Promise.all(stockOps);
+    }
+
+    // 4. Update Payment Record
     const payment = await paymentModel.findOneAndUpdate(
       { "razorpay.order_id": razorpay_order_id },
       {
@@ -345,6 +358,13 @@ export const verifyPayment = async (req, res) => {
         "razorpay.payment_id": razorpay_payment_id,
         "razorpay.signature": razorpay_signature,
         payment_id: razorpay_payment_id,
+        // Snapshot cart items for order history
+        orderSnapshot: cart ? cart.items.map((item) => ({
+          title: item.product?.title || "Product",
+          image: item.image,
+          quantity: item.quantity,
+          price: item.price,
+        })) : [],
       },
       { new: true },
     );
@@ -355,8 +375,30 @@ export const verifyPayment = async (req, res) => {
         .json({ success: false, message: "Payment record not found" });
     }
 
-    // 3. Clear the User's Cart
+    // 5. Clear the User's Cart
     await cartModel.findOneAndUpdate({ user: req.user._id }, { items: [] });
+
+    // 6. Send order confirmation email (non-blocking)
+    try {
+      const user = await userModel.findById(req.user._id);
+      if (user?.email) {
+        const html = orderConfirmationTemplate({
+          name: user.fullname || "Customer",
+          orderId: razorpay_order_id,
+          amount: payment.price?.amount || 0,
+          currency: payment.price?.currency || "INR",
+          items: payment.orderSnapshot || [],
+        });
+        await sendEmail(
+          user.email,
+          "Your Snitch Order is Confirmed 🎉",
+          `Order ${razorpay_order_id} confirmed. Total: ${payment.price?.currency} ${payment.price?.amount}`,
+          html,
+        );
+      }
+    } catch (emailErr) {
+      console.error("Order confirmation email failed:", emailErr.message);
+    }
 
     return res.status(200).json({
       success: true,
@@ -366,5 +408,19 @@ export const verifyPayment = async (req, res) => {
   } catch (error) {
     console.error("VerifyPayment error:", error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── Get My Orders ────────────────────────────────────────────────────────────
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await paymentModel
+      .find({ user: req.user._id, status: "paid" })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("GetMyOrders error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
