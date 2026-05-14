@@ -1,3 +1,5 @@
+import { Config } from "../config/env.js";
+
 /**
  * Generates an HTML order confirmation email.
  * @param {Object} opts
@@ -89,7 +91,7 @@ export const orderConfirmationTemplate = ({ name, orderId, amount, currency = "I
 
         <hr class="divider">
         <div style="text-align:center;">
-          <a href="http://localhost:5173/orders" class="cta-btn">View My Orders</a>
+          <a href="${Config.FRONTEND_URL}/orders" class="cta-btn">View My Orders</a>
         </div>
       </div>
       <div class="footer">

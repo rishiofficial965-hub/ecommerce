@@ -164,10 +164,10 @@ export const googleCallbackHandler = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.redirect("http://localhost:5173");
+    return res.redirect(`${Config.FRONTEND_URL}`);
   } catch (err) {
     console.error("Google OAuth error:", err);
-    return res.redirect("http://localhost:5173/login?error=oauth_failed");
+    return res.redirect(`${Config.FRONTEND_URL}/login?error=oauth_failed`);
   }
 };
 

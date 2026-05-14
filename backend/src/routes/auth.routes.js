@@ -34,7 +34,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:5173/login",
+    failureRedirect: `${Config.FRONTEND_URL}/login`,
     session: false,
   }),
   googleCallbackHandler,
